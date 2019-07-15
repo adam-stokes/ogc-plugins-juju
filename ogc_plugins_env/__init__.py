@@ -2,11 +2,8 @@
 """
 
 import os
-
-class OGCPluginEnv(Exception):
-    """ Env plugin exception class
-    """
-    pass
+import click
+import sys
 
 
 class Env:
@@ -23,8 +20,6 @@ class Env:
     properties-file = "/home/user/env.properties"
     """
 
-    # This is the top level key for this plugin which is represented as [Env] in the spec
-    SPEC_KEY = "Env"
     VERSION = "0.0.1"
 
     def process(self, spec):
@@ -33,6 +28,6 @@ class Env:
         env = os.environ.copy()
         check_requires = spec.get('requires', None)
         if check_requires and not set(check_requires) < set(env):
-            raise OGCPluginEnv(
-                f"Requirements {check_requires} not found in host environment ")
+            click.echo(f"Requirements {check_requires} not found in host environment")
+            sys.exit(1)
         return
