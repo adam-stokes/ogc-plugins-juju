@@ -1,12 +1,14 @@
-""" OGC Env Plugin - environment variable discovery
+""" OGC Juju Plugin - juju access
 """
 
 import os
 import click
 import sys
 
+from ogc import log
 
-class Env:
+
+class Juju:
     """ OGC Env Plugin
 
     [Env]
@@ -28,6 +30,7 @@ class Env:
         env = os.environ.copy()
         check_requires = spec.get('requires', None)
         if check_requires and not set(check_requires) < set(env):
-            click.echo(f"Requirements {check_requires} not found in host environment")
+            env_differ = ", ".join(list(set(check_requires).difference(env)))
+            log.debug(f"Requirements {env_differ} not found in host environment")
             sys.exit(1)
         return
