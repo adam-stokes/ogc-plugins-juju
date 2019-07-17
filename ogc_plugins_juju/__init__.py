@@ -7,6 +7,7 @@ import sys
 import sh
 from pprint import pformat
 from ogc import log
+from ogc.state import app
 from ogc.spec import SpecPlugin
 
 
@@ -82,6 +83,24 @@ class Juju(SpecPlugin):
     ]
 
     @property
+    def juju(self):
+        """ Juju baked command containing the applications environment
+        """
+        return sh.juju.bake(_env=app.env.copy())
+
+    @property
+    def charm(self):
+        """ Charm command baked with application environment
+        """
+        return sh.charm.bake(_env=app.env.copy())
+
+    @property
+    def juju_wait(self):
+        """ Charm command baked with application environment
+        """
+        return sh.juju_wait.bake(_env=app.env.copy())
+
+    @property
     def _fmt_controller_model(self):
         return f"{self.get_option('controller')}:{self.get_option('model')}"
 
@@ -102,7 +121,7 @@ class Juju(SpecPlugin):
                 charm_pull_args.append(bundle_channel)
                 charm_pull_args.append("./bundle-to-test")
             # Access charmstore bundle
-            sh.charm.pull(bundle, *charm_pull_args)
+            self.charm.pull(bundle, *charm_pull_args)
             deploy_cmd_args = [
                 "-m",
                 self._fmt_controller_model,
@@ -114,12 +133,16 @@ class Juju(SpecPlugin):
             if charm_channel:
                 deploy_cmd_args.append("--channel")
                 deploy_cmd_args.append(charm_channel)
-            for line in sh.juju.deploy(*deploy_cmd_args, _iter=True, _err_to_out=True):
+            for line in self.juju.deploy(
+                *deploy_cmd_args, _iter=True, _err_to_out=True
+            ):
                 line = line.strip()
                 log.info(line)
         else:
             deploy_cmd_args = ["-m", self._fmt_controller_model, bundle]
-            for line in sh.juju.deploy(*deploy_cmd_args, _iter=True, _err_to_out=True):
+            for line in self.juju.deploy(
+                *deploy_cmd_args, _iter=True, _err_to_out=True
+            ):
                 line = line.strip()
                 log.info(line)
 
@@ -140,7 +163,7 @@ class Juju(SpecPlugin):
         if bootstrap_debug:
             bootstrap_cmd_args.append("--debug")
         try:
-            for line in sh.juju(*bootstrap_cmd_args, _iter=True, _err_to_out=True):
+            for line in self.juju(*bootstrap_cmd_args, _iter=True, _err_to_out=True):
                 line = line.strip()
                 log.debug(line)
         except sh.ErrorReturnCode_1 as e:
@@ -157,7 +180,7 @@ class Juju(SpecPlugin):
                 self.get_option("cloud"),
             ]
 
-            sh.juju("add-model", *add_model_args)
+            self.juju("add-model", *add_model_args)
 
     def _wait(self):
         deploy_wait = (
@@ -165,9 +188,16 @@ class Juju(SpecPlugin):
         )
         if deploy_wait:
             log.info("Waiting for deployment to settle")
-            log.debug(
-                sh.juju_wait("-e", self._fmt_controller_model, "-w", "-r3", "-t14400")
-            )
+            for line in self.juju_wait(
+                "-e",
+                self._fmt_controller_model,
+                "-w",
+                "-r3",
+                "-t14400",
+                _iter=True,
+                _err_to_out=True,
+            ):
+                log.debug(line)
 
     def process(self):
         """ Processes options
@@ -183,6 +213,9 @@ class Juju(SpecPlugin):
             config_sets = self.get_option("config.set")
             if config_sets:
                 for config in config_sets:
+                    app_name, setting = config.split(" ")
                     log.info(f"Setting {config}")
-                    sh.juju.config("-m", self._fmt_controller_model, config)
+                    self.juju.config(
+                        "-m", self._fmt_controller_model, app_name, setting
+                    )
             self._wait()
