@@ -8,7 +8,7 @@ import sh
 from pprint import pformat
 from ogc import log
 from ogc.state import app
-from ogc.spec import SpecPlugin
+from ogc.spec import SpecPlugin, SpecProcessException
 
 
 class Juju(SpecPlugin):
@@ -167,8 +167,7 @@ class Juju(SpecPlugin):
                 line = line.strip()
                 log.debug(line)
         except sh.ErrorReturnCode_1 as e:
-            log.error(f"Unable to bootstrap:\n {e.stdout.decode()}")
-            sys.exit(1)
+            raise SpecProcessException(f"Unable to bootstrap:\n {e.stdout.decode()}")
 
         disable_add_model = self.get_option("bootstrap.disable_add_model")
         if not disable_add_model:
