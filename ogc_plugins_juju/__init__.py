@@ -5,6 +5,8 @@ import os
 import click
 import sys
 import sh
+import uuid
+from tempfile import gettempdir
 from pprint import pformat
 from ogc import log
 from ogc.state import app
@@ -59,9 +61,7 @@ class Juju(SpecPlugin):
            "kubernetes-worker = allow-privileged=true"]
     """
 
-    NAME = "Juju Plugin"
-
-    deps = ["snap:juju", "snap:charm"]
+    friendly_name = "Juju Plugin"
 
     options = [
         ("cloud", True),
@@ -75,8 +75,8 @@ class Juju(SpecPlugin):
         ("deploy.reuse", False),
         ("deploy.bundle", True),
         ("deploy.overlay", False),
-        ("deploy.bundle_channel", False),
-        ("deploy.charm_channel", False),
+        ("deploy.bundle_channel", True),
+        ("deploy.charm_channel", True),
         ("deploy.wait", False),
         ("config", False),
         ("config.set", False),
@@ -116,16 +116,20 @@ class Juju(SpecPlugin):
         charm_pull_args = []
         if bundle.startswith("cs:"):
             charm_pull_args.append(bundle)
+            tmpsuffix = str(uuid.uuid4()).split('-').pop()
+            charm_pull_path = f"{gettempdir()}/{tmpsuffix}"
+
             if bundle_channel:
                 charm_pull_args.append("--channel")
                 charm_pull_args.append(bundle_channel)
-                charm_pull_args.append("./bundle-to-test")
+                charm_pull_args.append(charm_pull_path)
+
             # Access charmstore bundle
-            self.charm.pull(bundle, *charm_pull_args)
+            self.charm.pull(*charm_pull_args)
             deploy_cmd_args = [
                 "-m",
                 self._fmt_controller_model,
-                "./bundle-to-test/bundle.yaml",
+                f"{charm_pull_path}/bundle.yaml",
             ]
             if overlay:
                 deploy_cmd_args.append("--overlay")
@@ -164,8 +168,7 @@ class Juju(SpecPlugin):
             bootstrap_cmd_args.append("--debug")
         try:
             for line in self.juju(*bootstrap_cmd_args, _iter=True, _err_to_out=True):
-                line = line.strip()
-                log.debug(line)
+                log.debug(line.strip())
         except sh.ErrorReturnCode_1 as e:
             raise SpecProcessException(f"Unable to bootstrap:\n {e.stdout.decode()}")
 
@@ -196,13 +199,13 @@ class Juju(SpecPlugin):
                 _iter=True,
                 _err_to_out=True,
             ):
-                log.debug(line)
+                log.debug(line.strip())
 
     def process(self):
         """ Processes options
         """
         # Bootstrap unless reuse is true, controller and model must exist already
-        if not self.get_option("deploy.reuse"):
+        if not self.get_option("deploy.reuse") and self.get_option('bootstrap'):
             self._bootstrap()
 
         # Do deploy
