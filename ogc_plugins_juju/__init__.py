@@ -6,8 +6,9 @@ import click
 import sys
 import sh
 import uuid
+import yaml
 from tempfile import gettempdir
-from pprint import pformat
+from melddict import MeldDict
 from ogc import log
 from ogc.state import app
 from ogc.spec import SpecPlugin, SpecProcessException
@@ -15,50 +16,6 @@ from ogc.spec import SpecPlugin, SpecProcessException
 
 class Juju(SpecPlugin):
     """ OGC Juju Plugin
-
-    [Juju]
-    # Juju module for bootstrapping and deploying a bundle
-    cloud = "aws"
-
-    # controller to create
-    controller = "validator"
-
-    # model to create
-    model = "validator-model"
-
-    [Juju.bootstrap]
-    # turn on debugging
-    debug = false
-
-    # disable adding the specified model, usually when some configuration on the
-    # models have to be done
-    disable-add-model = true
-
-    [Juju.deploy]
-    # reuse existing controller/model
-    reuse = True
-
-    # bundle to deploy
-    # bundle = "cs:~owner/custom-bundle"
-    bundle = "bundles/my-custom-bundle.yaml"
-
-    # Optional overlay to pass into juju
-    overlay = "overlays/1.15-edge.yaml"
-
-    # Optional bundle channel to deploy from
-    bundle_channel = "edge"
-
-    # Optional charm channel to deploy from
-    charm_channel = "edge"
-
-    # Wait for a deployment to settle?
-    wait = true
-
-    [Juju.config]
-    # Config options to pass to a deployed application
-    # ie, juju config -m controller:model kubernetes-master allow-privileged=true
-    set = ["kubernetes-master = allow-privileged=true",
-           "kubernetes-worker = allow-privileged=true"]
     """
 
     friendly_name = "Juju Plugin"
@@ -221,3 +178,51 @@ class Juju(SpecPlugin):
                         "-m", self._fmt_controller_model, app_name, setting
                     )
             self._wait()
+
+    def doc(self):
+        """
+        [Juju]
+        # Juju module for bootstrapping and deploying a bundle
+        cloud = "aws"
+
+        # controller to create
+        controller = "validator"
+
+        # model to create
+        model = "validator-model"
+
+        [Juju.bootstrap]
+        # turn on debugging
+        debug = false
+
+        # disable adding the specified model, usually when some configuration on the
+        # models have to be done
+        disable-add-model = true
+
+        [Juju.deploy]
+        # reuse existing controller/model
+        reuse = True
+
+        # bundle to deploy
+        # bundle = "cs:~owner/custom-bundle"
+        bundle = "bundles/my-custom-bundle.yaml"
+
+        # Optional overlay to pass into juju
+        overlay = "overlays/1.15-edge.yaml"
+
+        # Optional bundle channel to deploy from
+        bundle_channel = "edge"
+
+        # Optional charm channel to deploy from
+        charm_channel = "edge"
+
+        # Wait for a deployment to settle?
+        wait = true
+
+        [Juju.config]
+        # Config options to pass to a deployed application
+        # ie, juju config -m controller:model kubernetes-master allow-privileged=true
+        set = ["kubernetes-master = allow-privileged=true",
+               "kubernetes-worker = allow-privileged=true"]
+        """
+        return
