@@ -116,7 +116,7 @@ class Juju(SpecPlugin):
         charm_pull_args = []
         if bundle.startswith("cs:"):
             charm_pull_args.append(bundle)
-            tmpsuffix = str(uuid.uuid4()).split('-').pop()
+            tmpsuffix = str(uuid.uuid4()).split("-").pop()
             charm_pull_path = f"{gettempdir()}/{tmpsuffix}"
 
             if bundle_channel:
@@ -205,7 +205,7 @@ class Juju(SpecPlugin):
         """ Processes options
         """
         # Bootstrap unless reuse is true, controller and model must exist already
-        if not self.get_option("deploy.reuse") and self.get_option('bootstrap'):
+        if not self.get_option("deploy.reuse") and self.get_option("bootstrap"):
             self._bootstrap()
 
         # Do deploy
