@@ -37,6 +37,7 @@ class Juju(SpecPlugin):
         ("deploy.wait", False),
         ("config", False),
         ("config.set", False),
+        ("tags", False),
     ]
 
     @property
@@ -141,6 +142,17 @@ class Juju(SpecPlugin):
 
             self.juju("add-model", *add_model_args)
 
+    def _add_model(self):
+        log.info(f"Adding model {self._fmt_controller_model}")
+        add_model_args = [
+            "-c",
+            self.get_option("controller"),
+            self.get_option("model"),
+            self.get_option("cloud"),
+        ]
+
+        self.juju("add-model", *add_model_args)
+
     def _wait(self):
         deploy_wait = (
             self.get_option("deploy.wait") if self.get_option("deploy.wait") else False
@@ -167,6 +179,9 @@ class Juju(SpecPlugin):
 
         # Do deploy
         if self.get_option("deploy"):
+            if self.get_option("bootstrap.disable_add_model"):
+                # Add model here since it wasn't done during bootstrap
+                self._add_model()
             self._deploy()
             self._wait()
             config_sets = self.get_option("config.set")
