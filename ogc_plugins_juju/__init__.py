@@ -1,4 +1,8 @@
-""" OGC Juju Plugin - juju access
+"""
+---
+title:  OGC Juju Plugin - juju access
+targets: ['docs/plugins/juju.md']
+---
 """
 
 import os
@@ -7,6 +11,7 @@ import sys
 import sh
 import uuid
 import yaml
+import textwrap
 from tempfile import gettempdir
 from melddict import MeldDict
 from ogc import log
@@ -18,26 +23,87 @@ class Juju(SpecPlugin):
     """ OGC Juju Plugin
     """
 
-    friendly_name = "Juju Plugin"
+    friendly_name = "OGC Juju Plugin"
+    description = "Juju plugin for bootstrap and deployment of applications"
 
     options = [
-        ("cloud", True),
-        ("controller", True),
-        ("model", True),
-        ("bootstrap", True),
-        ("bootstrap.constraints", False),
-        ("bootstrap.debug", False),
-        ("bootstrap.disable_add_model", False),
-        ("deploy", False),
-        ("deploy.reuse", False),
-        ("deploy.bundle", True),
-        ("deploy.overlay", False),
-        ("deploy.bundle_channel", True),
-        ("deploy.charm_channel", True),
-        ("deploy.wait", False),
-        ("config", False),
-        ("config.set", False),
-        ("tags", False),
+        {
+            "key": "cloud",
+            "required": True,
+            "description": "Name of one of the support Juju clouds to use.",
+        },
+        {
+            "key": "controller",
+            "required": True,
+            "description": "Name of the controller to create with Juju.",
+        },
+        {
+            "key": "model",
+            "required": True,
+            "description": "Name of the model to create with Juju.",
+        },
+        {
+            "key": "bootstrap",
+            "required": True,
+            "description": "Juju bootstrap options.",
+        },
+        {
+            "key": "bootstrap.constraints",
+            "required": False,
+            "description": "Juju bootstrap constraints",
+            "example": "cloud = 'aws/us-east-1",
+        },
+        {
+            "key": "bootstrap.debug",
+            "required": False,
+            "description": "Turn on debugging during a bootstrap",
+        },
+        {
+            "key": "bootstrap.disable_add_model",
+            "required": False,
+            "description": "Do not immediately add a Juju model after bootstrap. Useful if juju model configuration needs to be performed.",
+        },
+        {"key": "deploy", "required": False, "description": "Juju deploy options"},
+        {
+            "key": "deploy.reuse",
+            "required": False,
+            "description": "Reuse an existing Juju model, please note that if applications exist and you deploy the same application it will create additional machines.",
+        },
+        {
+            "key": "deploy.bundle",
+            "required": True,
+            "description": "The Juju bundle to use",
+        },
+        {
+            "key": "deploy.overlay",
+            "required": False,
+            "description": "Juju bundle fragments that can be overlayed a base bundle.",
+        },
+        {
+            "key": "deploy.bundle_channel",
+            "required": True,
+            "description": "Juju bundle channel to deploy from.",
+        },
+        {
+            "key": "deploy.charm_channel",
+            "required": True,
+            "description": "Juju charm channel to deploy from. Typically, same as the bundle channel unless you are deploying individual charms.",
+        },
+        {
+            "key": "deploy.wait",
+            "required": False,
+            "description": "Juju deploy is asynchronous. Turn this option on to wait for a deployment to settle.",
+        },
+        {
+            "key": "config",
+            "required": False,
+            "description": "Juju charm config options",
+        },
+        {
+            "key": "config.set",
+            "required": False,
+            "description": "Set a Juju charm config option",
+        },
     ]
 
     @property
@@ -194,8 +260,12 @@ class Juju(SpecPlugin):
                     )
             self._wait()
 
-    def doc(self):
-        """
+    @classmethod
+    def doc_example(cls):
+        return textwrap.dedent("""
+        ## Example
+
+        ```toml
         [Juju]
         # Juju module for bootstrapping and deploying a bundle
         cloud = "aws"
@@ -239,5 +309,7 @@ class Juju(SpecPlugin):
         # ie, juju config -m controller:model kubernetes-master allow-privileged=true
         set = ["kubernetes-master = allow-privileged=true",
                "kubernetes-worker = allow-privileged=true"]
-        """
-        return
+        ```
+        """)
+
+__class_plugin_obj__ = Juju
