@@ -262,7 +262,8 @@ class Juju(SpecPlugin):
 
     @classmethod
     def doc_example(cls):
-        return textwrap.dedent("""
+        return textwrap.dedent(
+            """
         ## Example
 
         ```toml
@@ -310,6 +311,8 @@ class Juju(SpecPlugin):
         set = ["kubernetes-master = allow-privileged=true",
                "kubernetes-worker = allow-privileged=true"]
         ```
-        """)
+        """
+        )
+
 
 __class_plugin_obj__ = Juju
