@@ -12,7 +12,8 @@ import sh
 import uuid
 import yaml
 import textwrap
-from tempfile import gettempdir
+from pathlib import Path
+import tempfile
 from melddict import MeldDict
 from ogc import log
 from ogc.state import app
@@ -44,7 +45,7 @@ class Juju(SpecPlugin):
         },
         {
             "key": "bootstrap",
-            "required": True,
+            "required": False,
             "description": "Juju bootstrap options.",
         },
         {
@@ -57,6 +58,11 @@ class Juju(SpecPlugin):
             "key": "bootstrap.debug",
             "required": False,
             "description": "Turn on debugging during a bootstrap",
+        },
+        {
+            "key": "bootstrap.run",
+            "required": False,
+            "description": "Pass in a script blob to run in place of the builtin juju bootstrap commands ",
         },
         {
             "key": "bootstrap.disable_add_model",
@@ -106,6 +112,26 @@ class Juju(SpecPlugin):
         },
     ]
 
+    def _make_executable(self, path):
+        mode = os.stat(str(path)).st_mode
+        mode |= (mode & 0o444) >> 2
+        os.chmod(str(path), mode)
+
+    @property
+    def _tempfile(self):
+        return tempfile.mkstemp()
+
+    def _run(self, script_data):
+        tmp_script = self._tempfile
+        tmp_script_path = Path(tmp_script[-1])
+        tmp_script_path.write_text(script_data, encoding="utf8")
+        self._make_executable(tmp_script_path)
+        os.close(tmp_script[0])
+        for line in sh.env(
+            str(tmp_script_path), _env=app.env.copy(), _iter=True, _bg_exc=False
+        ):
+            app.log.debug(f"run :: {line.strip()}")
+
     @property
     def juju(self):
         """ Juju baked command containing the applications environment
@@ -126,22 +152,24 @@ class Juju(SpecPlugin):
 
     @property
     def _fmt_controller_model(self):
-        return f"{self.get_option('controller')}:{self.get_option('model')}"
+        return (
+            f"{self.get_plugin_option('controller')}:{self.get_plugin_option('model')}"
+        )
 
     def _deploy(self):
         """ Handles juju deploy
         """
-        bundle = self.get_option("deploy.bundle")
-        overlay = self.get_option("deploy.overlay")
-        bundle_channel = self.get_option("deploy.bundle_channel")
-        charm_channel = self.get_option("deploy.charm_channel")
+        bundle = self.get_plugin_option("deploy.bundle")
+        overlay = self.get_plugin_option("deploy.overlay")
+        bundle_channel = self.get_plugin_option("deploy.bundle_channel")
+        charm_channel = self.get_plugin_option("deploy.charm_channel")
 
         deploy_cmd_args = []
         charm_pull_args = []
         if bundle.startswith("cs:"):
             charm_pull_args.append(bundle)
             tmpsuffix = str(uuid.uuid4()).split("-").pop()
-            charm_pull_path = f"{gettempdir()}/{tmpsuffix}"
+            charm_pull_path = f"{tempfile.gettempdir()}/{tmpsuffix}"
 
             if bundle_channel:
                 charm_pull_args.append("--channel")
@@ -179,15 +207,15 @@ class Juju(SpecPlugin):
         """
         bootstrap_cmd_args = [
             "bootstrap",
-            self.get_option("cloud"),
-            self.get_option("controller"),
+            self.get_plugin_option("cloud"),
+            self.get_plugin_option("controller"),
         ]
-        bootstrap_constraints = self.get_option("bootstrap.constraints")
+        bootstrap_constraints = self.get_plugin_option("bootstrap.constraints")
         if bootstrap_constraints:
             bootstrap_cmd_args.append("--bootstrap-constraints")
             bootstrap_cmd_args.append(bootstrap_constraints)
 
-        bootstrap_debug = self.get_option("bootstrap.debug")
+        bootstrap_debug = self.get_plugin_option("bootstrap.debug")
         if bootstrap_debug:
             bootstrap_cmd_args.append("--debug")
         try:
@@ -196,14 +224,14 @@ class Juju(SpecPlugin):
         except sh.ErrorReturnCode_1 as e:
             raise SpecProcessException(f"Unable to bootstrap:\n {e.stdout.decode()}")
 
-        disable_add_model = self.get_option("bootstrap.disable_add_model")
+        disable_add_model = self.get_plugin_option("bootstrap.disable_add_model")
         if not disable_add_model:
             log.info(f"Adding model {self._fmt_controller_model}")
             add_model_args = [
                 "-c",
-                self.get_option("controller"),
-                self.get_option("model"),
-                self.get_option("cloud"),
+                self.get_plugin_option("controller"),
+                self.get_plugin_option("model"),
+                self.get_plugin_option("cloud"),
             ]
 
             self.juju("add-model", *add_model_args)
@@ -212,16 +240,18 @@ class Juju(SpecPlugin):
         log.info(f"Adding model {self._fmt_controller_model}")
         add_model_args = [
             "-c",
-            self.get_option("controller"),
-            self.get_option("model"),
-            self.get_option("cloud"),
+            self.get_plugin_option("controller"),
+            self.get_plugin_option("model"),
+            self.get_plugin_option("cloud"),
         ]
 
         self.juju("add-model", *add_model_args)
 
     def _wait(self):
         deploy_wait = (
-            self.get_option("deploy.wait") if self.get_option("deploy.wait") else False
+            self.get_plugin_option("deploy.wait")
+            if self.get_plugin_option("deploy.wait")
+            else False
         )
         if deploy_wait:
             log.info("Waiting for deployment to settle")
@@ -239,18 +269,27 @@ class Juju(SpecPlugin):
     def process(self):
         """ Processes options
         """
+        run = self.get_plugin_option("bootstrap.run")
+        if run:
+            app.log.debug(
+                "A runner override for bootstrapping found, executing instead."
+            )
+            return self._run(run)
+
         # Bootstrap unless reuse is true, controller and model must exist already
-        if not self.get_option("deploy.reuse") and self.get_option("bootstrap"):
+        if not self.get_plugin_option("deploy.reuse") and self.get_plugin_option(
+            "bootstrap"
+        ):
             self._bootstrap()
 
         # Do deploy
-        if self.get_option("deploy"):
-            if self.get_option("bootstrap.disable_add_model"):
+        if self.get_plugin_option("deploy"):
+            if self.get_plugin_option("bootstrap.disable_add_model"):
                 # Add model here since it wasn't done during bootstrap
                 self._add_model()
             self._deploy()
             self._wait()
-            config_sets = self.get_option("config.set")
+            config_sets = self.get_plugin_option("config.set")
             if config_sets:
                 for config in config_sets:
                     app_name, setting = config.split(" ")
@@ -264,53 +303,75 @@ class Juju(SpecPlugin):
     def doc_example(cls):
         return textwrap.dedent(
             """
-        ## Example
-
-        ```toml
-        [Juju]
-        # Juju module for bootstrapping and deploying a bundle
-        cloud = "aws"
-
-        # controller to create
-        controller = "validator"
-
-        # model to create
-        model = "validator-model"
-
-        [Juju.bootstrap]
-        # turn on debugging
-        debug = false
-
-        # disable adding the specified model, usually when some configuration on the
-        # models have to be done
-        disable-add-model = true
-
-        [Juju.deploy]
-        # reuse existing controller/model
-        reuse = True
-
-        # bundle to deploy
-        # bundle = "cs:~owner/custom-bundle"
-        bundle = "bundles/my-custom-bundle.yaml"
-
-        # Optional overlay to pass into juju
-        overlay = "overlays/1.15-edge.yaml"
-
-        # Optional bundle channel to deploy from
-        bundle_channel = "edge"
-
-        # Optional charm channel to deploy from
-        charm_channel = "edge"
-
-        # Wait for a deployment to settle?
-        wait = true
-
-        [Juju.config]
-        # Config options to pass to a deployed application
-        # ie, juju config -m controller:model kubernetes-master allow-privileged=true
-        set = ["kubernetes-master = allow-privileged=true",
-               "kubernetes-worker = allow-privileged=true"]
-        ```
+            ## Example 1
+    
+            ```toml
+            [Juju]
+            # Juju module for bootstrapping and deploying a bundle
+            cloud = "aws"
+    
+            # controller to create
+            controller = "validator"
+    
+            # model to create
+            model = "validator-model"
+    
+            [Juju.bootstrap]
+            # turn on debugging
+            debug = false
+    
+            # disable adding the specified model, usually when some configuration on the
+            # models have to be done
+            disable-add-model = true
+    
+            [Juju.deploy]
+            # reuse existing controller/model
+            reuse = True
+    
+            # bundle to deploy
+            # bundle = "cs:~owner/custom-bundle"
+            bundle = "bundles/my-custom-bundle.yaml"
+    
+            # Optional overlay to pass into juju
+            overlay = "overlays/1.15-edge.yaml"
+    
+            # Optional bundle channel to deploy from
+            bundle_channel = "edge"
+    
+            # Optional charm channel to deploy from
+            charm_channel = "edge"
+    
+            # Wait for a deployment to settle?
+            wait = true
+    
+            [Juju.config]
+            # Config options to pass to a deployed application
+            # ie, juju config -m controller:model kubernetes-master allow-privileged=true
+            set = ["kubernetes-master = allow-privileged=true",
+                   "kubernetes-worker = allow-privileged=true"]
+            ```
+    
+            ## Example 2
+    
+            Overriding the built in bootstrap command
+    
+            ```toml
+            [Juju]
+            # Juju module for bootstrapping and deploying a bundle
+            cloud = "aws"
+    
+            # controller to create
+            controller = "validator"
+    
+            # model to create
+            model = "validator-model"
+    
+            [Juju.bootstrap]
+            run = \"\"\"
+            #!/bin/bash
+            python3 validations/tests/tigera/cleanup_vpcs.py
+            CONTROLLER=$JUJU_CONTROLLER validations/tests/tigera/bootstrap_aws_single_subnet.py
+            \"\"\"
         """
         )
 
