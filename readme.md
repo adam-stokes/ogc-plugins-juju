@@ -34,10 +34,7 @@ bundle = "bundles/my-custom-bundle.yaml"
 overlay = "overlays/1.15-edge.yaml"
 
 # Optional bundle channel to deploy from
-bundle_channel = "edge"
-
-# Optional charm channel to deploy from
-charm_channel = "edge"
+channel = "edge"
 
 # Wait for a deployment to settle?
 wait = true

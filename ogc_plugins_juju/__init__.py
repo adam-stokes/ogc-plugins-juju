@@ -86,14 +86,9 @@ class Juju(SpecPlugin):
             "description": "Juju bundle fragments that can be overlayed a base bundle.",
         },
         {
-            "key": "deploy.bundle_channel",
+            "key": "deploy.channel",
             "required": True,
-            "description": "Juju bundle channel to deploy from.",
-        },
-        {
-            "key": "deploy.charm_channel",
-            "required": True,
-            "description": "Juju charm channel to deploy from. Typically, same as the bundle channel unless you are deploying individual charms.",
+            "description": "Juju channel to deploy from.",
         },
         {
             "key": "deploy.wait",
@@ -161,8 +156,7 @@ class Juju(SpecPlugin):
         """
         bundle = self.get_plugin_option("deploy.bundle")
         overlay = self.get_plugin_option("deploy.overlay")
-        bundle_channel = self.get_plugin_option("deploy.bundle_channel")
-        charm_channel = self.get_plugin_option("deploy.charm_channel")
+        channel = self.get_plugin_option("deploy.channel")
 
         deploy_cmd_args = []
         charm_pull_args = []
@@ -171,9 +165,9 @@ class Juju(SpecPlugin):
             tmpsuffix = str(uuid.uuid4()).split("-").pop()
             charm_pull_path = f"{tempfile.gettempdir()}/{tmpsuffix}"
 
-            if bundle_channel:
+            if channel:
                 charm_pull_args.append("--channel")
-                charm_pull_args.append(bundle_channel)
+                charm_pull_args.append(channel)
                 charm_pull_args.append(charm_pull_path)
 
             # Access charmstore bundle
@@ -336,10 +330,7 @@ class Juju(SpecPlugin):
             overlay = "overlays/1.15-edge.yaml"
 
             # Optional bundle channel to deploy from
-            bundle_channel = "edge"
-
-            # Optional charm channel to deploy from
-            charm_channel = "edge"
+            channel = "edge"
 
             # Wait for a deployment to settle?
             wait = true
