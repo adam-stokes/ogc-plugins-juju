@@ -6,7 +6,7 @@ README = README.read_text(encoding="utf8")
 
 setuptools.setup(
     name="ogc-plugins-juju",
-    version="0.0.5",
+    version="0.0.1",
     author="Adam Stokes",
     author_email="adam.stokes@ubuntu.com",
     description="ogc-plugins-juju, a ogc plugin for working with juju",
