@@ -15,7 +15,6 @@ import textwrap
 from pathlib import Path
 import tempfile
 from melddict import MeldDict
-from ogc import log
 from ogc.state import app
 from ogc.spec import SpecPlugin, SpecProcessException
 
@@ -171,6 +170,7 @@ class Juju(SpecPlugin):
                 charm_pull_args.append(charm_pull_path)
 
             # Access charmstore bundle
+            app.log.debug(f"Charm pull: {charm_pull_args}")
             self.charm.pull(*charm_pull_args)
             deploy_cmd_args = [
                 "-m",
@@ -180,21 +180,28 @@ class Juju(SpecPlugin):
             if overlay:
                 deploy_cmd_args.append("--overlay")
                 deploy_cmd_args.append(overlay)
-            if charm_channel:
+            if channel:
                 deploy_cmd_args.append("--channel")
-                deploy_cmd_args.append(charm_channel)
-            for line in self.juju.deploy(
-                *deploy_cmd_args, _iter=True, _err_to_out=True
-            ):
-                line = line.strip()
-                log.info(line)
+                deploy_cmd_args.append(channel)
+            try:
+                app.log.debug("Deploying charmstore bundle: {deploy_cmd_args}")
+                for line in self.juju.deploy(
+                        *deploy_cmd_args, _iter=True, _bg_exc=False
+                ):
+                    app.log.info(line.strip())
+            except sh.ErrorReturnCode as error:
+                raise SpecProcessException(f"Failed to deploy ({deploy_cmd_args}): {error.stderr.decode().strip()}")
         else:
             deploy_cmd_args = ["-m", self._fmt_controller_model, bundle]
-            for line in self.juju.deploy(
-                *deploy_cmd_args, _iter=True, _err_to_out=True
-            ):
-                line = line.strip()
-                log.info(line)
+            try:
+                app.log.debug("Deploying custom bundle: {deploy_cmd_args}")
+                for line in self.juju.deploy(
+                        *deploy_cmd_args, _iter=True, _bc_exc=False
+                ):
+                    app.log.info(line.strip())
+            except sh.ErrorReturnCode as error:
+                raise SpecProcessException(f"Failed to deploy ({deploy_cmd_args}): {error.stderr.decode().strip()}")
+
 
     def _bootstrap(self):
         """ Bootstraps environment
@@ -213,14 +220,14 @@ class Juju(SpecPlugin):
         if bootstrap_debug:
             bootstrap_cmd_args.append("--debug")
         try:
-            for line in self.juju(*bootstrap_cmd_args, _iter=True, _err_to_out=True):
-                log.debug(line.strip())
+            for line in self.juju(*bootstrap_cmd_args, _iter=True, _bg_exc=False):
+                app.log.debug(line.strip())
         except sh.ErrorReturnCode_1 as e:
             raise SpecProcessException(f"Unable to bootstrap:\n {e.stdout.decode()}")
 
         disable_add_model = self.get_plugin_option("bootstrap.disable_add_model")
         if not disable_add_model:
-            log.info(f"Adding model {self._fmt_controller_model}")
+            app.log.info(f"Adding model {self._fmt_controller_model}")
             add_model_args = [
                 "-c",
                 self.get_plugin_option("controller"),
@@ -231,7 +238,7 @@ class Juju(SpecPlugin):
             self.juju("add-model", *add_model_args)
 
     def _add_model(self):
-        log.info(f"Adding model {self._fmt_controller_model}")
+        app.log.info(f"Adding model {self._fmt_controller_model}")
         add_model_args = [
             "-c",
             self.get_plugin_option("controller"),
@@ -248,7 +255,7 @@ class Juju(SpecPlugin):
             else False
         )
         if deploy_wait:
-            log.info("Waiting for deployment to settle")
+            app.log.info("Waiting for deployment to settle")
             for line in self.juju_wait(
                 "-e",
                 self._fmt_controller_model,
@@ -256,9 +263,9 @@ class Juju(SpecPlugin):
                 "-r3",
                 "-t14400",
                 _iter=True,
-                _err_to_out=True,
+                _bg_exc=False,
             ):
-                log.debug(line.strip())
+                app.log.debug(line.strip())
 
     def process(self):
         """ Processes options
@@ -287,7 +294,7 @@ class Juju(SpecPlugin):
             if config_sets:
                 for config in config_sets:
                     app_name, setting = config.split(" ")
-                    log.info(f"Setting {config}")
+                    app.log.info(f"Setting {config}")
                     self.juju.config(
                         "-m", self._fmt_controller_model, app_name, setting
                     )
@@ -363,6 +370,7 @@ class Juju(SpecPlugin):
             python3 validations/tests/tigera/cleanup_vpcs.py
             CONTROLLER=$JUJU_CONTROLLER validations/tests/tigera/bootstrap_aws_single_subnet.py
             \"\"\"
+            ```
         """
         )
 
