@@ -186,22 +186,25 @@ class Juju(SpecPlugin):
             try:
                 app.log.debug("Deploying charmstore bundle: {deploy_cmd_args}")
                 for line in self.juju.deploy(
-                        *deploy_cmd_args, _iter=True, _bg_exc=False
+                    *deploy_cmd_args, _iter=True, _bg_exc=False
                 ):
                     app.log.info(line.strip())
             except sh.ErrorReturnCode as error:
-                raise SpecProcessException(f"Failed to deploy ({deploy_cmd_args}): {error.stderr.decode().strip()}")
+                raise SpecProcessException(
+                    f"Failed to deploy ({deploy_cmd_args}): {error.stderr.decode().strip()}"
+                )
         else:
             deploy_cmd_args = ["-m", self._fmt_controller_model, bundle]
             try:
                 app.log.debug("Deploying custom bundle: {deploy_cmd_args}")
                 for line in self.juju.deploy(
-                        *deploy_cmd_args, _iter=True, _bc_exc=False
+                    *deploy_cmd_args, _iter=True, _bc_exc=False
                 ):
                     app.log.info(line.strip())
             except sh.ErrorReturnCode as error:
-                raise SpecProcessException(f"Failed to deploy ({deploy_cmd_args}): {error.stderr.decode().strip()}")
-
+                raise SpecProcessException(
+                    f"Failed to deploy ({deploy_cmd_args}): {error.stderr.decode().strip()}"
+                )
 
     def _bootstrap(self):
         """ Bootstraps environment
