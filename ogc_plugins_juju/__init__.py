@@ -277,9 +277,9 @@ class Juju(SpecPlugin):
             return self._run(run)
 
         # Bootstrap unless reuse is true, controller and model must exist already
-        if not self.get_plugin_option("deploy.reuse") and self.get_plugin_option(
-            "bootstrap"
-        ):
+        reuse = self.get_plugin_option("deploy.reuse")
+        bootstrap = self.get_plugin_option("bootstrap")
+        if not reuse and bootstrap:
             self._bootstrap()
 
         # Do deploy
@@ -304,68 +304,68 @@ class Juju(SpecPlugin):
         return textwrap.dedent(
             """
             ## Example 1
-    
+
             ```toml
             [Juju]
             # Juju module for bootstrapping and deploying a bundle
             cloud = "aws"
-    
+
             # controller to create
             controller = "validator"
-    
+
             # model to create
             model = "validator-model"
-    
+
             [Juju.bootstrap]
             # turn on debugging
             debug = false
-    
+
             # disable adding the specified model, usually when some configuration on the
             # models have to be done
             disable-add-model = true
-    
+
             [Juju.deploy]
             # reuse existing controller/model
-            reuse = True
-    
+            reuse = true
+
             # bundle to deploy
             # bundle = "cs:~owner/custom-bundle"
             bundle = "bundles/my-custom-bundle.yaml"
-    
+
             # Optional overlay to pass into juju
             overlay = "overlays/1.15-edge.yaml"
-    
+
             # Optional bundle channel to deploy from
             bundle_channel = "edge"
-    
+
             # Optional charm channel to deploy from
             charm_channel = "edge"
-    
+
             # Wait for a deployment to settle?
             wait = true
-    
+
             [Juju.config]
             # Config options to pass to a deployed application
             # ie, juju config -m controller:model kubernetes-master allow-privileged=true
             set = ["kubernetes-master = allow-privileged=true",
                    "kubernetes-worker = allow-privileged=true"]
             ```
-    
+
             ## Example 2
-    
+
             Overriding the built in bootstrap command
-    
+
             ```toml
             [Juju]
             # Juju module for bootstrapping and deploying a bundle
             cloud = "aws"
-    
+
             # controller to create
             controller = "validator"
-    
+
             # model to create
             model = "validator-model"
-    
+
             [Juju.bootstrap]
             run = \"\"\"
             #!/bin/bash
