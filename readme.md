@@ -23,7 +23,7 @@ debug = false
 
 # disable adding the specified model, usually when some configuration on the
 # models have to be done
-disable-add-model = true
+disable_add_model = true
 
 [Juju.deploy]
 # bundle to deploy
@@ -40,10 +40,8 @@ channel = "edge"
 wait = true
 
 [Juju.config]
-# Config options to pass to a deployed application
-# ie, juju config -m controller:model kubernetes-master allow-privileged=true
-kubernetes-master = "allow-privileged=true"
-kubernetes-worker = "allow-privileged=true"
+set = ["kubernetes-master allow-privileged=true",
+       "kubernetes-worker allow-privileged=true"]
 ```
 
-# see `ogc spec-doc Juju` for more information.
+### see `ogc spec-doc Juju` for more information.
