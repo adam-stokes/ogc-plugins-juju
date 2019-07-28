@@ -19,6 +19,14 @@ from ogc.state import app
 from ogc.spec import SpecPlugin, SpecProcessException
 
 
+__version__ = "1.0.0"
+__author__ = "Adam Stokes"
+__author_email__ = "adam.stokes@gmail.com"
+__maintainer__ = "Adam Stokes"
+__maintainer_email__ = "adam.stokes@gmail.com"
+__description__ = "ogc-plugins-juju, a ogc plugin for working with juju"
+__git_repo__ = "https://github.com/battlemidget/ogc-plugins-juju"
+
 class Juju(SpecPlugin):
     """ OGC Juju Plugin
     """
