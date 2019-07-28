@@ -1,5 +1,5 @@
 import setuptools
-import juju as package
+import ogc_plugins_juju as package
 from pathlib import Path
 
 README = Path(__file__).parent.absolute() / "readme.md"
@@ -15,7 +15,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url=package.__git_repo__,
     py_modules=[package.__name__],
-    entry_points={"ogc.plugins": "Juju = juju:Juju"},
+    entry_points={"ogc.plugins": "Juju = ogc_plugins_juju:Juju"},
     install_requires=[
         "ogc>=0.1.5,<1.0.0",
         "click>=7.0.0,<8.0.0",
