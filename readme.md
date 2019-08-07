@@ -4,44 +4,55 @@ juju plugin for ogc
 
 # usage
 
-In a ogc spec, place the following:
+In a ogc spec, place the following in whatever phase (setup, plan, teardown):
 
-```toml
-[Juju]
-# Juju module for bootstrapping and deploying a bundle
-cloud = "aws"
+```yaml
+name: Validate Charmed Kubernetes
+description: |
+  Runs validation test suite against a vanilla deployment of Charmed Kubernetes
 
-# controller to create
-controller = "validator"
+setup:
+  - juju:
+      - bootstrap:
+          debug: no
+          model-default: test-mode=true
+      - deploy:
+          bundle: charmed-kubernetes
+          overlay: |
+            applications:
+              kubernetes-master:
+                options:
+                  channel: $SNAP_VERSION
+              kubernetes-worker:
+                options:
+                  channel: $SNAP_VERSION
+          cloud: $JUJU_CLOUD
+          controller: $JUJU_CONTROLLER
+          model: $JUJU_MODEL
+          wait: yes
+      - config:
+          - kubernetes-master allow-privileged=true
+          - kubernetes-worker allow-privileged=true
 
-# model to create
-model = "validator-model"
+plan:
+  - runner:
+      summary: "Full validation of charmed kubernetes"
+      fail-silently: yes
+      cmd: |
+        pytest validations/tests/validation.py \
+           --connection $JUJU_CONTROLLER:$JUJU_MODEL \
+           --cloud $JUJU_CLOUD \
+           --bunndle-channel $JUJU_DEPLOY_CHANNEL \
+           --snap-channel $SNAP_VERSION
+teardown:
+  - runner:
+      cmd: |
+        juju destroy-controller -y --destroy-all-models --destroy-storage $JUJU_CONTROLLER
+      block: absolute
 
-[Juju.bootstrap]
-# turn on debugging
-debug = false
-
-# disable adding the specified model, usually when some configuration on the
-# models have to be done
-disable_add_model = true
-
-[Juju.deploy]
-# bundle to deploy
-# bundle = "cs:~owner/custom-bundle"
-bundle = "bundles/my-custom-bundle.yaml"
-
-# Optional overlay to pass into juju
-overlay = "overlays/1.15-edge.yaml"
-
-# Optional bundle channel to deploy from
-channel = "edge"
-
-# Wait for a deployment to settle?
-wait = true
-
-[Juju.config]
-set = ["kubernetes-master allow-privileged=true",
-       "kubernetes-worker allow-privileged=true"]
+docs:
+  - spec:
+      destination: validations/ck/index.md
 ```
 
 ### see `ogc spec-doc Juju` for more information.

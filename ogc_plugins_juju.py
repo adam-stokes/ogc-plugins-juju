@@ -32,7 +32,6 @@ class Juju(SpecPlugin):
     """
 
     friendly_name = "OGC Juju Plugin"
-    description = "Juju plugin for bootstrap and deployment of applications"
 
     options = [
         {
@@ -51,11 +50,6 @@ class Juju(SpecPlugin):
             "description": "Name of the model to create with Juju.",
         },
         {
-            "key": "bootstrap",
-            "required": False,
-            "description": "Juju bootstrap options.",
-        },
-        {
             "key": "bootstrap.constraints",
             "required": False,
             "description": "Juju bootstrap constraints",
@@ -72,7 +66,7 @@ class Juju(SpecPlugin):
             "description": "Pass in a script blob to run in place of the builtin juju bootstrap commands ",
         },
         {
-            "key": "bootstrap.disable_add_model",
+            "key": "bootstrap.disable-add-model",
             "required": False,
             "description": "Do not immediately add a Juju model after bootstrap. Useful if juju model configuration needs to be performed.",
         },
@@ -113,6 +107,9 @@ class Juju(SpecPlugin):
             "description": "Set a Juju charm config option",
         },
     ]
+
+    def __str__(self):
+        return "OGC Juju plugin for bootstrap, deployment, testing"
 
     def _make_executable(self, path):
         mode = os.stat(str(path)).st_mode
@@ -161,9 +158,9 @@ class Juju(SpecPlugin):
     def _deploy(self):
         """ Handles juju deploy
         """
-        bundle = self.get_plugin_option("deploy.bundle")
-        overlay = self.get_plugin_option("deploy.overlay")
-        channel = self.get_plugin_option("deploy.channel")
+        bundle = self.opt("deploy.bundle")
+        overlay = self.opt("deploy.overlay")
+        channel = self.opt("deploy.channel")
 
         deploy_cmd_args = []
         charm_pull_args = []
@@ -186,13 +183,17 @@ class Juju(SpecPlugin):
                 f"{charm_pull_path}/bundle.yaml",
             ]
             if overlay:
+                tmp_file = tempfile.mkstemp()
+                tmp_file_path = Path(tmp_file[-1])
+                tmp_file_path.write_text(overlay, encoding="utf8")
                 deploy_cmd_args.append("--overlay")
-                deploy_cmd_args.append(overlay)
+                deploy_cmd_args.append(str(tmp_file_path))
+                os.close(tmp_file[0])
             if channel:
                 deploy_cmd_args.append("--channel")
                 deploy_cmd_args.append(channel)
             try:
-                app.log.debug("Deploying charmstore bundle: {deploy_cmd_args}")
+                app.log.debug(f"Deploying charmstore bundle: {deploy_cmd_args}")
                 for line in self.juju.deploy(
                     *deploy_cmd_args, _iter=True, _bg_exc=False
                 ):
@@ -219,31 +220,31 @@ class Juju(SpecPlugin):
         """
         bootstrap_cmd_args = [
             "bootstrap",
-            self.get_plugin_option("cloud"),
-            self.get_plugin_option("controller"),
+            self.opt("cloud"),
+            self.opt("controller"),
         ]
-        bootstrap_constraints = self.get_plugin_option("bootstrap.constraints")
+        bootstrap_constraints = self.opt("bootstrap.constraints")
         if bootstrap_constraints:
             bootstrap_cmd_args.append("--bootstrap-constraints")
             bootstrap_cmd_args.append(bootstrap_constraints)
 
-        bootstrap_debug = self.get_plugin_option("bootstrap.debug")
+        bootstrap_debug = self.opt("bootstrap.debug")
         if bootstrap_debug:
             bootstrap_cmd_args.append("--debug")
         try:
-            for line in self.juju(*bootstrap_cmd_args, _iter=True, _bg_exc=False):
+            for line in self.juju(*bootstrap_cmd_args, _iter=True, _bg_exc=False, _err_to_out=True):
                 app.log.debug(line.strip())
-        except sh.ErrorReturnCode_1 as e:
-            raise SpecProcessException(f"Unable to bootstrap:\n {e.stdout.decode()}")
+        except sh.ErrorReturnCode as error:
+            raise SpecProcessException(f"Unable to bootstrap:\n {error.stdout.decode()}")
 
-        disable_add_model = self.get_plugin_option("bootstrap.disable_add_model")
+        disable_add_model = self.opt("bootstrap.disable-add-model")
         if not disable_add_model:
             app.log.info(f"Adding model {self._fmt_controller_model}")
             add_model_args = [
                 "-c",
-                self.get_plugin_option("controller"),
-                self.get_plugin_option("model"),
-                self.get_plugin_option("cloud"),
+                self.opt("controller"),
+                self.opt("model"),
+                self.opt("cloud"),
             ]
 
             self.juju("add-model", *add_model_args)
@@ -252,17 +253,17 @@ class Juju(SpecPlugin):
         app.log.info(f"Adding model {self._fmt_controller_model}")
         add_model_args = [
             "-c",
-            self.get_plugin_option("controller"),
-            self.get_plugin_option("model"),
-            self.get_plugin_option("cloud"),
+            self.opt("controller"),
+            self.opt("model"),
+            self.opt("cloud"),
         ]
 
         self.juju("add-model", *add_model_args)
 
     def _wait(self):
         deploy_wait = (
-            self.get_plugin_option("deploy.wait")
-            if self.get_plugin_option("deploy.wait")
+            self.opt("deploy.wait")
+            if self.opt("deploy.wait")
             else False
         )
         if deploy_wait:
@@ -281,7 +282,7 @@ class Juju(SpecPlugin):
     def process(self):
         """ Processes options
         """
-        run = self.get_plugin_option("bootstrap.run")
+        run = self.opt("bootstrap.run")
         if run:
             app.log.debug(
                 "A runner override for bootstrapping found, executing instead."
@@ -289,19 +290,19 @@ class Juju(SpecPlugin):
             return self._run(run)
 
         # Bootstrap unless reuse is true, controller and model must exist already
-        reuse = self.get_plugin_option("deploy.reuse")
-        bootstrap = self.get_plugin_option("bootstrap")
+        reuse = self.opt("deploy.reuse")
+        bootstrap = self.opt("bootstrap")
         if not reuse and bootstrap:
             self._bootstrap()
 
         # Do deploy
-        if self.get_plugin_option("deploy"):
-            if self.get_plugin_option("bootstrap.disable_add_model"):
+        if self.opt("deploy"):
+            if self.opt("bootstrap.disable-add-model"):
                 # Add model here since it wasn't done during bootstrap
                 self._add_model()
             self._deploy()
             self._wait()
-            config_sets = self.get_plugin_option("config.set")
+            config_sets = self.opt("config.set")
             if config_sets:
                 for config in config_sets:
                     app_name, setting = config.split(" ")
