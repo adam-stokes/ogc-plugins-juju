@@ -19,7 +19,7 @@ from ogc.state import app
 from ogc.spec import SpecPlugin, SpecProcessException
 
 
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 __author__ = "Adam Stokes"
 __author_email__ = "adam.stokes@gmail.com"
 __maintainer__ = "Adam Stokes"
