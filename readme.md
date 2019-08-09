@@ -7,9 +7,10 @@ juju plugin for ogc
 In a ogc spec, place the following in whatever phase (setup, plan, teardown):
 
 ```yaml
-name: Validate Charmed Kubernetes
-description: |
-  Runs validation test suite against a vanilla deployment of Charmed Kubernetes
+meta:
+  name: Validate Charmed Kubernetes
+  description: |
+    Runs validation test suite against a vanilla deployment of Charmed Kubernetes
 
 setup:
   - juju:
@@ -36,9 +37,9 @@ setup:
 
 plan:
   - runner:
-      summary: "Full validation of charmed kubernetes"
+      description: "Full validation of charmed kubernetes"
       fail-silently: yes
-      cmd: |
+      script: |
         pytest validations/tests/validation.py \
            --connection $JUJU_CONTROLLER:$JUJU_MODEL \
            --cloud $JUJU_CLOUD \
@@ -46,13 +47,10 @@ plan:
            --snap-channel $SNAP_VERSION
 teardown:
   - runner:
-      cmd: |
+      description: Destroy juju environment, cleanup storage
+      script: |
         juju destroy-controller -y --destroy-all-models --destroy-storage $JUJU_CONTROLLER
       block: absolute
-
-docs:
-  - spec:
-      destination: validations/ck/index.md
 ```
 
 ### see `ogc spec-doc Juju` for more information.
