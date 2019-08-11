@@ -22,7 +22,7 @@ plan:
   - runner:
       description: Upload dist
       cmd: twine upload dist/*
-      tags: [bdist]
+      tags: [bdist, publish]
   - runner:
       description: cleanup artifacts
       cmd: rm -rf build dist ogc_plugins_env.egg-info __pycache__
