@@ -60,6 +60,7 @@ teardown:
       cmd: juju destroy-controller -y --destroy-all-models --destroy-storage $JUJU_CONTROLLER
 """
 
+
 class Juju(SpecPlugin):
     """ OGC Juju Plugin
     """
@@ -251,11 +252,7 @@ class Juju(SpecPlugin):
     def _bootstrap(self):
         """ Bootstraps environment
         """
-        bootstrap_cmd_args = [
-            "bootstrap",
-            self.opt("cloud"),
-            self.opt("controller"),
-        ]
+        bootstrap_cmd_args = ["bootstrap", self.opt("cloud"), self.opt("controller")]
         bootstrap_constraints = self.opt("bootstrap.constraints")
         if bootstrap_constraints:
             bootstrap_cmd_args.append("--bootstrap-constraints")
@@ -265,10 +262,14 @@ class Juju(SpecPlugin):
         if bootstrap_debug:
             bootstrap_cmd_args.append("--debug")
         try:
-            for line in self.juju(*bootstrap_cmd_args, _iter=True, _bg_exc=False, _err_to_out=True):
+            for line in self.juju(
+                *bootstrap_cmd_args, _iter=True, _bg_exc=False, _err_to_out=True
+            ):
                 app.log.debug(line.strip())
         except sh.ErrorReturnCode as error:
-            raise SpecProcessException(f"Unable to bootstrap:\n {error.stdout.decode()}")
+            raise SpecProcessException(
+                f"Unable to bootstrap:\n {error.stdout.decode()}"
+            )
 
         disable_add_model = self.opt("bootstrap.disable-add-model")
         if not disable_add_model:
@@ -294,11 +295,7 @@ class Juju(SpecPlugin):
         self.juju("add-model", *add_model_args)
 
     def _wait(self):
-        deploy_wait = (
-            self.opt("deploy.wait")
-            if self.opt("deploy.wait")
-            else False
-        )
+        deploy_wait = self.opt("deploy.wait") if self.opt("deploy.wait") else False
         if deploy_wait:
             app.log.info("Waiting for deployment to settle")
             for line in self.juju_wait(
