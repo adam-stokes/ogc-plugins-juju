@@ -12,7 +12,7 @@ from ogc.state import app
 from ogc.spec import SpecPlugin, SpecProcessException
 
 __plugin_name__ = "ogc-plugins-juju"
-__version__ = "1.0.2"
+__version__ = "1.0.3"
 __author__ = "Adam Stokes"
 __author_email__ = "adam.stokes@gmail.com"
 __maintainer__ = "Adam Stokes"
