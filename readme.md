@@ -40,6 +40,7 @@ plan:
       description: "Full validation of charmed kubernetes"
       fail-silently: yes
       script: |
+        #!/bin/bash
         pytest validations/tests/validation.py \
            --connection $JUJU_CONTROLLER:$JUJU_MODEL \
            --cloud $JUJU_CLOUD \
@@ -48,9 +49,7 @@ plan:
 teardown:
   - runner:
       description: Destroy juju environment, cleanup storage
-      script: |
-        juju destroy-controller -y --destroy-all-models --destroy-storage $JUJU_CONTROLLER
-      block: absolute
+      cmd: juju destroy-controller -y --destroy-all-models --destroy-storage $JUJU_CONTROLLER
 ```
 
 ### see `ogc spec-doc Juju` for more information.

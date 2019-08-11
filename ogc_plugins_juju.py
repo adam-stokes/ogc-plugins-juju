@@ -1,10 +1,3 @@
-"""
----
-title:  OGC Juju Plugin - juju access
-targets: ['docs/plugins/juju.md']
----
-"""
-
 import os
 import click
 import sys
@@ -18,7 +11,7 @@ from melddict import MeldDict
 from ogc.state import app
 from ogc.spec import SpecPlugin, SpecProcessException
 
-
+__plugin_name__ = "ogc-plugins-juju"
 __version__ = "1.0.2"
 __author__ = "Adam Stokes"
 __author_email__ = "adam.stokes@gmail.com"
@@ -26,6 +19,46 @@ __maintainer__ = "Adam Stokes"
 __maintainer_email__ = "adam.stokes@gmail.com"
 __description__ = "ogc-plugins-juju, a ogc plugin for working with juju"
 __git_repo__ = "https://github.com/battlemidget/ogc-plugins-juju"
+__example__ = """
+setup:
+  - juju:
+      - bootstrap:
+          debug: no
+          model-default: test-mode=true
+      - deploy:
+          bundle: charmed-kubernetes
+          overlay: |
+            applications:
+              kubernetes-master:
+                options:
+                  channel: $SNAP_VERSION
+              kubernetes-worker:
+                options:
+                  channel: $SNAP_VERSION
+          cloud: $JUJU_CLOUD
+          controller: $JUJU_CONTROLLER
+          model: $JUJU_MODEL
+          wait: yes
+      - config:
+          - kubernetes-master allow-privileged=true
+          - kubernetes-worker allow-privileged=true
+
+plan:
+  - runner:
+      description: "Full validation of charmed kubernetes"
+      fail-silently: yes
+      script: |
+        #!/bin/bash
+        pytest validations/tests/validation.py \
+           --connection $JUJU_CONTROLLER:$JUJU_MODEL \
+           --cloud $JUJU_CLOUD \
+           --bunndle-channel $JUJU_DEPLOY_CHANNEL \
+           --snap-channel $SNAP_VERSION
+teardown:
+  - runner:
+      description: Destroy juju environment, cleanup storage
+      cmd: juju destroy-controller -y --destroy-all-models --destroy-storage $JUJU_CONTROLLER
+"""
 
 class Juju(SpecPlugin):
     """ OGC Juju Plugin
@@ -311,80 +344,6 @@ class Juju(SpecPlugin):
                         "-m", self._fmt_controller_model, app_name, setting
                     )
             self._wait()
-
-    @classmethod
-    def doc_example(cls):
-        return textwrap.dedent(
-            """
-            ## Example 1
-
-            ```toml
-            [Juju]
-            # Juju module for bootstrapping and deploying a bundle
-            cloud = "aws"
-
-            # controller to create
-            controller = "validator"
-
-            # model to create
-            model = "validator-model"
-
-            [Juju.bootstrap]
-            # turn on debugging
-            debug = false
-
-            # disable adding the specified model, usually when some configuration on the
-            # models have to be done
-            disable-add-model = true
-
-            [Juju.deploy]
-            # reuse existing controller/model
-            reuse = true
-
-            # bundle to deploy
-            # bundle = "cs:~owner/custom-bundle"
-            bundle = "bundles/my-custom-bundle.yaml"
-
-            # Optional overlay to pass into juju
-            overlay = "overlays/1.15-edge.yaml"
-
-            # Optional bundle channel to deploy from
-            channel = "edge"
-
-            # Wait for a deployment to settle?
-            wait = true
-
-            [Juju.config]
-            # Config options to pass to a deployed application
-            # ie, juju config -m controller:model kubernetes-master allow-privileged=true
-            set = ["kubernetes-master = allow-privileged=true",
-                   "kubernetes-worker = allow-privileged=true"]
-            ```
-
-            ## Example 2
-
-            Overriding the built in bootstrap command
-
-            ```toml
-            [Juju]
-            # Juju module for bootstrapping and deploying a bundle
-            cloud = "aws"
-
-            # controller to create
-            controller = "validator"
-
-            # model to create
-            model = "validator-model"
-
-            [Juju.bootstrap]
-            run = \"\"\"
-            #!/bin/bash
-            python3 validations/tests/tigera/cleanup_vpcs.py
-            CONTROLLER=$JUJU_CONTROLLER validations/tests/tigera/bootstrap_aws_single_subnet.py
-            \"\"\"
-            ```
-        """
-        )
 
 
 __class_plugin_obj__ = Juju

@@ -6,7 +6,7 @@ README = Path(__file__).parent.absolute() / "readme.md"
 README = README.read_text(encoding="utf8")
 
 setuptools.setup(
-    name="ogc-plugins-juju",
+    name=package.__plugin_name__,
     version=package.__version__,
     author=package.__author__,
     author_email=package.__author_email__,
@@ -21,6 +21,6 @@ setuptools.setup(
         "click>=7.0.0,<8.0.0",
         "sh>=1.12,<2.0",
         "juju-wait==2.7.0",
-        "pyyaml==3.13",
+        "pyyaml>=5.0,<6.0",
     ],
 )
