@@ -12,7 +12,7 @@ from ogc.state import app
 from ogc.spec import SpecPlugin, SpecProcessException
 
 __plugin_name__ = "ogc-plugins-juju"
-__version__ = "1.0.3"
+__version__ = "1.0.4"
 __author__ = "Adam Stokes"
 __author_email__ = "adam.stokes@gmail.com"
 __maintainer__ = "Adam Stokes"
@@ -93,7 +93,6 @@ class Juju(SpecPlugin):
             "required": False,
             "description": "Juju bootstrap model defaults",
         },
-
         {
             "key": "bootstrap.debug",
             "required": False,
@@ -167,11 +166,13 @@ class Juju(SpecPlugin):
         os.close(tmp_script[0])
         try:
             for line in sh.env(
-                    str(tmp_script_path), _env=app.env.copy(), _iter=True, _bg_exc=False
+                str(tmp_script_path), _env=app.env.copy(), _iter=True, _bg_exc=False
             ):
                 app.log.debug(f"run :: {line.strip()}")
         except sh.ErrorReturnCode as error:
-            raise SpecProcessException(f"Failure to bootstrap: {error.stderr.decode().strip()}")
+            raise SpecProcessException(
+                f"Failure to bootstrap: {error.stderr.decode().strip()}"
+            )
 
     @property
     def juju(self):
@@ -260,11 +261,13 @@ class Juju(SpecPlugin):
     def _bootstrap(self):
         """ Bootstraps environment
         """
-        bootstrap_cmd_args = ["bootstrap",
-                              self.opt("cloud"),
-                              self.opt("controller"),
-                              "-d",
-                              self.opt("model")]
+        bootstrap_cmd_args = [
+            "bootstrap",
+            self.opt("cloud"),
+            self.opt("controller"),
+            "-d",
+            self.opt("model"),
+        ]
         bootstrap_constraints = self.opt("bootstrap.constraints")
         if bootstrap_constraints:
             bootstrap_cmd_args.append("--bootstrap-constraints")
