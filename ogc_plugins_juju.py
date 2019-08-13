@@ -87,8 +87,13 @@ class Juju(SpecPlugin):
             "key": "bootstrap.constraints",
             "required": False,
             "description": "Juju bootstrap constraints",
-            "example": "cloud = 'aws/us-east-1",
         },
+        {
+            "key": "bootstrap.model-default",
+            "required": False,
+            "description": "Juju bootstrap model defaults",
+        },
+
         {
             "key": "bootstrap.debug",
             "required": False,
@@ -160,10 +165,13 @@ class Juju(SpecPlugin):
         tmp_script_path.write_text(script_data, encoding="utf8")
         self._make_executable(tmp_script_path)
         os.close(tmp_script[0])
-        for line in sh.env(
-            str(tmp_script_path), _env=app.env.copy(), _iter=True, _bg_exc=False
-        ):
-            app.log.debug(f"run :: {line.strip()}")
+        try:
+            for line in sh.env(
+                    str(tmp_script_path), _env=app.env.copy(), _iter=True, _bg_exc=False
+            ):
+                app.log.debug(f"run :: {line.strip()}")
+        except sh.ErrorReturnCode as error:
+            raise SpecProcessException(f"Failure to bootstrap: {error.stderr.decode().strip()}")
 
     @property
     def juju(self):
@@ -252,15 +260,26 @@ class Juju(SpecPlugin):
     def _bootstrap(self):
         """ Bootstraps environment
         """
-        bootstrap_cmd_args = ["bootstrap", self.opt("cloud"), self.opt("controller")]
+        bootstrap_cmd_args = ["bootstrap",
+                              self.opt("cloud"),
+                              self.opt("controller"),
+                              "-d",
+                              self.opt("model")]
         bootstrap_constraints = self.opt("bootstrap.constraints")
         if bootstrap_constraints:
             bootstrap_cmd_args.append("--bootstrap-constraints")
             bootstrap_cmd_args.append(bootstrap_constraints)
 
+        model_defaults = self.opt("bootstrap.model-default")
+
+        for m_default in model_defaults:
+            bootstrap_cmd_args.append("--model-default")
+            bootstrap_cmd_args.append(m_default)
+
         bootstrap_debug = self.opt("bootstrap.debug")
         if bootstrap_debug:
             bootstrap_cmd_args.append("--debug")
+        app.log.debug(f"Juju bootstrap cmd > {bootstrap_cmd_args}")
         try:
             for line in self.juju(
                 *bootstrap_cmd_args, _iter=True, _bg_exc=False, _err_to_out=True
