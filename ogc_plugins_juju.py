@@ -251,7 +251,7 @@ class Juju(SpecPlugin):
         else:
             deploy_cmd_args = ["-m", self._fmt_controller_model, bundle]
             try:
-                app.log.debug("Deploying custom bundle: {deploy_cmd_args}")
+                app.log.debug(f"Deploying custom bundle: {deploy_cmd_args}")
                 for line in self.juju.deploy(
                     *deploy_cmd_args, _iter=True, _bc_exc=False
                 ):
