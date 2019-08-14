@@ -1,15 +1,13 @@
+""" OGC Plugin for interacting with Juju
+"""
 import os
-import click
-import sys
-import sh
-import uuid
-import yaml
-import textwrap
-from pathlib import Path
 import tempfile
-from melddict import MeldDict
-from ogc.state import app
+import uuid
+from pathlib import Path
+
+import sh
 from ogc.spec import SpecPlugin, SpecProcessException
+from ogc.state import app
 
 __plugin_name__ = "ogc-plugins-juju"
 __version__ = "1.0.5"
@@ -263,6 +261,25 @@ class Juju(SpecPlugin):
                     f"Failed to deploy ({deploy_cmd_args}): {error.stderr.decode().strip()}"
                 )
 
+    def _destroy(self):
+        """ Destroy environment
+        """
+        try:
+            for line in self.juju(
+                "destroy-controller",
+                "--destroy-all-models",
+                "--destroy-storage",
+                "-y",
+                self.opt("controller"),
+                _bg_exc=False,
+                _iter=True,
+            ):
+                app.log.info(f" -- {line.strip()}")
+        except sh.ErrorReturnCode as e:
+            app.log.debug(
+                f"Could not destroy controller: {e.stderr.decode().strip()}, no teardown performed."
+            )
+
     def _bootstrap(self):
         """ Bootstraps environment
         """
@@ -271,28 +288,10 @@ class Juju(SpecPlugin):
             app.log.info(
                 f"Replace controller triggered, will attempt to teardown {self.opt('controller')}"
             )
-            try:
-                for line in self.juju(
-                    "destroy-controller",
-                    "--destroy-all-models",
-                    "--destroy-storage",
-                    "-y",
-                    self.opt("controller"),
-                    _bg_exc=False,
-                    _iter=True,
-                ):
-                    app.log.info(f" -- {line.strip()}")
-            except sh.ErrorReturnCode as e:
-                app.log.debug(
-                    f"Could not destroy controller: {e.stderr.decode().strip()}, will continue on."
-                )
-        bootstrap_cmd_args = [
-            "bootstrap",
-            self.opt("cloud"),
-            self.opt("controller"),
-            "-d",
-            self.opt("model"),
-        ]
+            self._teardown()
+
+        bootstrap_cmd_args = ["bootstrap", self.opt("cloud"), self.opt("controller")]
+
         bootstrap_constraints = self.opt("bootstrap.constraints")
         if bootstrap_constraints:
             bootstrap_cmd_args.append("--bootstrap-constraints")
@@ -328,7 +327,12 @@ class Juju(SpecPlugin):
                 self.opt("cloud"),
             ]
 
-            self.juju("add-model", *add_model_args)
+            try:
+                self.juju("add-model", *add_model_args)
+            except sh.ErrorReturnCode as e:
+                raise SpecProcessException(
+                    f"Failed to add model: {e.stderr.decode().strip()}"
+                )
 
     def _add_model(self):
         app.log.info(f"Adding model {self._fmt_controller_model}")
@@ -339,7 +343,12 @@ class Juju(SpecPlugin):
             self.opt("cloud"),
         ]
 
-        self.juju("add-model", *add_model_args)
+        try:
+            self.juju("add-model", *add_model_args)
+        except sh.ErrorReturnCode as e:
+            raise SpecProcessException(
+                f"Failed to add model: {e.stderr.decode().strip()}"
+            )
 
     def _wait(self):
         deploy_wait = self.opt("deploy.wait") if self.opt("deploy.wait") else False
@@ -388,6 +397,10 @@ class Juju(SpecPlugin):
                         "-m", self._fmt_controller_model, app_name, setting
                     )
             self._wait()
+
+        # Do teardown
+        if self.opt("teardown"):
+            self._teardown()
 
 
 __class_plugin_obj__ = Juju

@@ -1,6 +1,8 @@
-import setuptools
-import ogc_plugins_juju as package
 from pathlib import Path
+
+import setuptools
+
+import ogc_plugins_juju as package
 
 README = Path(__file__).parent.absolute() / "readme.md"
 README = README.read_text(encoding="utf8")

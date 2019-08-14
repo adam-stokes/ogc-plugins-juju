@@ -4,8 +4,20 @@ meta:
 
 plan:
   - runner:
+      description: install dev requirements
+      cmd: pip install -rrequirements_dev.txt
+      tags: [dist, bdist]
+  - runner:
       description: prettyify
       cmd: black .
+      tags: [dist, bdist]
+  - runner:
+      description: isort
+      cmd: isort -rc -m 3 .
+      tags: [dist, bdist]
+  - runner:
+      description: lint
+      cmd: pylint ogc_plugins_juju.py
       tags: [dist, bdist]
   - runner:
       description: Test ogc core
