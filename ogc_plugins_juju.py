@@ -108,6 +108,11 @@ class Juju(SpecPlugin):
             "required": False,
             "description": "Do not immediately add a Juju model after bootstrap. Useful if juju model configuration needs to be performed.",
         },
+        {
+            "key": "bootstrap.replace-controller",
+            "required": False,
+            "description": "If previous juju controller exists, destroy that and re-bootstrap",
+        },
         {"key": "deploy", "required": False, "description": "Juju deploy options"},
         {
             "key": "deploy.reuse",
@@ -261,6 +266,26 @@ class Juju(SpecPlugin):
     def _bootstrap(self):
         """ Bootstraps environment
         """
+        replace_controller = self.opt("bootstrap.replace-controller")
+        if replace_controller:
+            app.log.info(
+                f"Replace controller triggered, will attempt to teardown {self.opt('controller')}"
+            )
+            try:
+                for line in self.juju(
+                    "destroy-controller",
+                    "--destroy-all-models",
+                    "--destroy-storage",
+                    "-y",
+                    self.opt("controller"),
+                    _bg_exc=False,
+                    _iter=True,
+                ):
+                    app.log.info(f" -- {line.strip()}")
+            except sh.ErrorReturnCode as e:
+                app.log.debug(
+                    f"Could not destroy controller: {e.stderr.decode().strip()}, will continue on."
+                )
         bootstrap_cmd_args = [
             "bootstrap",
             self.opt("cloud"),
