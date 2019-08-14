@@ -261,7 +261,7 @@ class Juju(SpecPlugin):
                     f"Failed to deploy ({deploy_cmd_args}): {error.stderr.decode().strip()}"
                 )
 
-    def _destroy(self):
+    def _teardown(self):
         """ Destroy environment
         """
         try:
