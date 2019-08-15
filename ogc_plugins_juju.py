@@ -142,11 +142,6 @@ class Juju(SpecPlugin):
             "required": False,
             "description": "Juju charm config options",
         },
-        {
-            "key": "config.set",
-            "required": False,
-            "description": "Set a Juju charm config option",
-        },
     ]
 
     def __str__(self):
@@ -388,7 +383,7 @@ class Juju(SpecPlugin):
                 self._add_model()
             self._deploy()
             self._wait()
-            config_sets = self.opt("config.set")
+            config_sets = self.opt("config")
             if config_sets:
                 for config in config_sets:
                     app_name, setting = config.split(" ")
