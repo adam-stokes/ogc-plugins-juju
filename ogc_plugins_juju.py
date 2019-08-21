@@ -20,6 +20,9 @@ __git_repo__ = "https://github.com/battlemidget/ogc-plugins-juju"
 __example__ = """
 setup:
   - juju:
+      cloud: $JUJU_CLOUD
+      controller: $JUJU_CONTROLLER
+      model: $JUJU_MODEL
       - bootstrap:
           debug: no
           model-default: test-mode=true
@@ -33,9 +36,6 @@ setup:
               kubernetes-worker:
                 options:
                   channel: $SNAP_VERSION
-          cloud: $JUJU_CLOUD
-          controller: $JUJU_CONTROLLER
-          model: $JUJU_MODEL
           wait: yes
       - config:
           - kubernetes-master allow-privileged=true
@@ -306,7 +306,7 @@ class Juju(SpecPlugin):
             for line in self.juju(
                 *bootstrap_cmd_args, _iter=True, _bg_exc=False, _err_to_out=True
             ):
-                app.log.debug(line.strip())
+                app.log.info(line.strip())
         except sh.ErrorReturnCode as error:
             raise SpecProcessException(
                 f"Unable to bootstrap:\n {error.stdout.decode()}"

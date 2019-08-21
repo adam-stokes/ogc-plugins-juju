@@ -4,4 +4,10 @@ disable=invalid-name,
         no-member,
         bad-continuation,
         no-self-use,
-        inconsistent-return-statements
+        inconsistent-return-statements,
+        missing-docstring,
+        too-few-public-methods,
+        unused-variable,
+        too-many-branches,
+        no-value-for-parameter
+

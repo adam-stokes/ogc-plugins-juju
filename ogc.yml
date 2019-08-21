@@ -20,7 +20,7 @@ plan:
       cmd: pylint ogc_plugins_juju.py
       tags: [dist, bdist]
   - runner:
-      description: Test ogc core
+      description: Test plugin
       cmd: pytest
       tags: [dist, bdist]
   - runner:
