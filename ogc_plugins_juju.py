@@ -400,7 +400,6 @@ class Juju(SpecPlugin):
                 # Add model here since it wasn't done during bootstrap
                 self._add_model()
             self._deploy()
-            self._wait()
             config_sets = self.opt("config")
             if config_sets:
                 for config in config_sets:
