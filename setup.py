@@ -23,6 +23,6 @@ setuptools.setup(
         "click>=7.0.0,<8.0.0",
         "sh>=1.12,<2.0",
         "juju-wait==2.7.0",
-        "pyyaml>=5.0,<6.0",
+        "pyyaml>=3.0,<6.0",
     ],
 )

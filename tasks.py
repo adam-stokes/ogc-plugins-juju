@@ -10,11 +10,11 @@ def clean(c):
 def fix(c):
     c.run("isort -rc -m 3 .")
     c.run("black .")
-    c.run("pylint ogc_plugins_juju.py")
 
 
 @task
 def test(c):
+    c.run("pylint ogc_plugins_juju.py")
     c.run("pytest")
 
 
@@ -33,7 +33,7 @@ def install(c):
     c.run("pip install --upgrade dist/*whl --force")
 
 
-@task
+@task(pre=[clean, fix, test, bump_rev, dist])
 def upload(c):
     c.run("twine upload dist/*")
 

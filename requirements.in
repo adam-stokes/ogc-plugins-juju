@@ -1,6 +1,10 @@
+pytest
+pytest-mock
+ogc>=0.3.30
 punch.py
 black
 pylint
 flake8
 isort
 invoke
+twine
