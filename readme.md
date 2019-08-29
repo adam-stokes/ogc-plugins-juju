@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/battlemidget/ogc-plugins-juju.svg?branch=master)](https://travis-ci.org/battlemidget/ogc-plugins-juju)
+
 # ogc-plugins-juju
 
 juju plugin for ogc
