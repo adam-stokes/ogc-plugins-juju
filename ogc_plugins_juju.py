@@ -10,7 +10,7 @@ from ogc.spec import SpecPlugin, SpecProcessException
 from ogc.state import app
 
 __plugin_name__ = "ogc-plugins-juju"
-__version__ = "1.0.14"
+__version__ = "1.0.15"
 __author__ = "Adam Stokes"
 __author_email__ = "adam.stokes@gmail.com"
 __maintainer__ = "Adam Stokes"
@@ -371,7 +371,9 @@ class Juju(SpecPlugin):
 
     def _wait(self):
         deploy_wait = self.opt("deploy.wait") if self.opt("deploy.wait") else False
-        deploy_timeout = self.opt("deploy.timeout") if self.opt("deploy.timeout") else 7200
+        deploy_timeout = (
+            self.opt("deploy.timeout") if self.opt("deploy.timeout") else 7200
+        )
         if deploy_wait:
             app.log.info("Waiting for deployment to settle")
             try:
@@ -389,7 +391,6 @@ class Juju(SpecPlugin):
                 raise SpecProcessException(
                     f"Failed to get a completed deployment status: {e.stderr.decode()}"
                 )
-
 
     def process(self):
         """ Processes options
