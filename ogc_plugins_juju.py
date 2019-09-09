@@ -10,7 +10,7 @@ from ogc.spec import SpecPlugin, SpecProcessException
 from ogc.state import app
 
 __plugin_name__ = "ogc-plugins-juju"
-__version__ = "1.0.12"
+__version__ = "1.0.13"
 __author__ = "Adam Stokes"
 __author_email__ = "adam.stokes@gmail.com"
 __maintainer__ = "Adam Stokes"
@@ -62,6 +62,7 @@ plan:
                   options:
                     channel: $SNAP_VERSION
             wait: yes
+            timeout: 7200
             channel: $JUJU_DEPLOY_CHANNEL
     script:
       - |
@@ -154,6 +155,11 @@ class Juju(SpecPlugin):
             "key": "deploy.wait",
             "required": False,
             "description": "Juju deploy is asynchronous. Turn this option on to wait for a deployment to settle.",
+        },
+        {
+            "key": "deploy.timeout",
+            "required": False,
+            "description": "How long in seconds to wait for a juju deployment to complete.",
         },
         {
             "key": "config",
@@ -365,18 +371,25 @@ class Juju(SpecPlugin):
 
     def _wait(self):
         deploy_wait = self.opt("deploy.wait") if self.opt("deploy.wait") else False
+        deploy_timeout = self.opt("deploy.timeout") if self.opt("deploy.timeout") else 7200
         if deploy_wait:
             app.log.info("Waiting for deployment to settle")
-            for line in self.juju_wait(
-                "-e",
-                self._fmt_controller_model,
-                "-w",
-                "-r3",
-                "-t14400",
-                _iter=True,
-                _bg_exc=False,
-            ):
-                app.log.debug(line.strip())
+            try:
+                for line in self.juju_wait(
+                    "-e",
+                    self._fmt_controller_model,
+                    "-w",
+                    "-r3",
+                    f"-t{deploy_timeout}",
+                    _iter=True,
+                    _bg_exc=False,
+                ):
+                    app.log.debug(line.strip())
+            except sh.ErrorReturnCode as e:
+                raise SpecProcessException(
+                    f"Failed to get a completed deployment status: {e.stderr.decode()}"
+                )
+
 
     def process(self):
         """ Processes options
