@@ -6,11 +6,12 @@ import uuid
 from pathlib import Path
 
 import sh
-from ogc.spec import SpecPlugin, SpecProcessException
+from ogc.exceptions import SpecProcessException
+from ogc.spec import SpecPlugin
 from ogc.state import app
 
 __plugin_name__ = "ogc-plugins-juju"
-__version__ = "1.0.16"
+__version__ = "1.0.17"
 __author__ = "Adam Stokes"
 __author_email__ = "adam.stokes@gmail.com"
 __maintainer__ = "Adam Stokes"
