@@ -1,6 +1,6 @@
 pytest
 pytest-mock
-ogc>=0.3.30
+ogc>=0.3.48
 punch.py
 black
 pylint

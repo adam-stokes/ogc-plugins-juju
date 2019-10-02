@@ -30,7 +30,7 @@ markupsafe==1.1.1         # via jinja2
 mccabe==0.6.1             # via flake8, pylint
 melddict==1.0.1           # via ogc
 more-itertools==7.2.0     # via pytest, zipp
-ogc==0.3.30
+ogc==0.3.48
 packaging==19.1           # via pytest
 pkginfo==1.5.0.1          # via twine
 pluggy==0.12.0            # via pytest
