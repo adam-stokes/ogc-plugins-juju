@@ -383,9 +383,9 @@ class Juju(SpecPlugin):
                     self._fmt_controller_model,
                     "-w",
                     "-r3",
-                    f"-t{deploy_timeout}",
                     _iter=True,
                     _bg_exc=False,
+                    _timeout=deploy_timeout,
                 ):
                     app.log.debug(line.strip())
             except sh.ErrorReturnCode as e:
