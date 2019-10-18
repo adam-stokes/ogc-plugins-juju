@@ -11,7 +11,7 @@ from ogc.spec import SpecPlugin
 from ogc.state import app
 
 __plugin_name__ = "ogc-plugins-juju"
-__version__ = "1.0.18"
+__version__ = "1.0.19"
 __author__ = "Adam Stokes"
 __author_email__ = "adam.stokes@gmail.com"
 __maintainer__ = "Adam Stokes"
@@ -153,6 +153,11 @@ class Juju(SpecPlugin):
             "description": "Juju channel to deploy from.",
         },
         {
+            "key": "deploy.constraints",
+            "required": False,
+            "description": "Juju deploy model constraints",
+        },
+        {
             "key": "deploy.wait",
             "required": False,
             "description": "Juju deploy is asynchronous. Turn this option on to wait for a deployment to settle.",
@@ -227,6 +232,7 @@ class Juju(SpecPlugin):
         bundle = self.opt("deploy.bundle")
         overlay = self.opt("deploy.overlay")
         channel = self.opt("deploy.channel")
+        constraints = self.opt("deploy.constraints")
 
         deploy_cmd_args = []
         charm_pull_args = []
@@ -258,6 +264,9 @@ class Juju(SpecPlugin):
             if channel:
                 deploy_cmd_args.append("--channel")
                 deploy_cmd_args.append(channel)
+            if constraints:
+                deploy_cmd_args.append("--constraints")
+                deploy_cmd_args.append(constraints)
             try:
                 app.log.debug(f"Deploying charmstore bundle: {deploy_cmd_args}")
                 for line in self.juju.deploy(
