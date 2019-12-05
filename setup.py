@@ -19,7 +19,7 @@ setuptools.setup(
     py_modules=[package.__name__],
     entry_points={"ogc.plugins": "Juju = ogc_plugins_juju:Juju"},
     install_requires=[
-        "ogc>=0.1.5,<1.0.0",
+        "ogc>=1.0.0,<2.0.0",
         "click>=7.0.0,<8.0.0",
         "sh>=1.12,<2.0",
         "juju-wait==2.7.0",
