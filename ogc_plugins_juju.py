@@ -131,6 +131,11 @@ class Juju(SpecPlugin):
             "required": False,
             "description": "If previous juju controller exists, destroy that and re-bootstrap",
         },
+        {
+            "key": "bootstrap.series",
+            "required": False,
+            "description": "Set the OS series to bootstrap with (ie. focal, bionic, xenial)",
+        },
         {"key": "deploy", "required": False, "description": "Juju deploy options"},
         {
             "key": "deploy.reuse",
@@ -146,6 +151,11 @@ class Juju(SpecPlugin):
             "key": "deploy.overlay",
             "required": False,
             "description": "Juju bundle fragments that can be overlayed a base bundle.",
+        },
+        {
+            "key": "deploy.series",
+            "required": False,
+            "description": "Set the OS series to deploy applications on (ie. focal, bionic, xenial)",
         },
         {
             "key": "deploy.channel",
@@ -233,6 +243,7 @@ class Juju(SpecPlugin):
         overlay = self.opt("deploy.overlay")
         channel = self.opt("deploy.channel")
         constraints = self.opt("deploy.constraints")
+        series = self.opt("deploy.series")
 
         deploy_cmd_args = []
         charm_pull_args = []
@@ -267,6 +278,9 @@ class Juju(SpecPlugin):
             if constraints:
                 deploy_cmd_args.append("--constraints")
                 deploy_cmd_args.append(constraints)
+            if series:
+                deploy_cmd_args.append("--series")
+                deploy_cmd_args.append(series)
             try:
                 app.log.debug(f"Deploying charmstore bundle: {deploy_cmd_args}")
                 for line in self.juju.deploy(
@@ -325,6 +339,12 @@ class Juju(SpecPlugin):
         if bootstrap_constraints:
             bootstrap_cmd_args.append("--bootstrap-constraints")
             bootstrap_cmd_args.append(bootstrap_constraints)
+
+        bootstrap_series = self.opt("bootstrap.series")
+        if bootstrap_series:
+            bootstrap_cmd_args.append("--bootstrap-series")
+            bootstrap_cmd_args.append(bootstrap_series)
+
 
         model_defaults = self.opt("bootstrap.model-default")
 
