@@ -11,7 +11,7 @@ from ogc.spec import SpecPlugin
 from ogc.state import app
 
 __plugin_name__ = "ogc-plugins-juju"
-__version__ = "1.0.20"
+__version__ = "1.0.21"
 __author__ = "Adam Stokes"
 __author_email__ = "adam.stokes@gmail.com"
 __maintainer__ = "Adam Stokes"
@@ -344,7 +344,6 @@ class Juju(SpecPlugin):
         if bootstrap_series:
             bootstrap_cmd_args.append("--bootstrap-series")
             bootstrap_cmd_args.append(bootstrap_series)
-
 
         model_defaults = self.opt("bootstrap.model-default")
 
