@@ -102,6 +102,11 @@ class Juju(SpecPlugin):
             "description": "Name of the model to create with Juju.",
         },
         {
+            "key": "force",
+            "required": False,
+            "description": "Pass in force flag for various components like bootstrap series",
+        },
+        {
             "key": "bootstrap.constraints",
             "required": False,
             "description": "Juju bootstrap constraints",
@@ -244,6 +249,7 @@ class Juju(SpecPlugin):
         channel = self.opt("deploy.channel")
         constraints = self.opt("deploy.constraints")
         series = self.opt("deploy.series")
+        force = self.opt("force")
 
         deploy_cmd_args = []
         charm_pull_args = []
@@ -281,6 +287,8 @@ class Juju(SpecPlugin):
             if series:
                 deploy_cmd_args.append("--series")
                 deploy_cmd_args.append(series)
+            if force:
+                deploy_cmd_args.append("--force")
             try:
                 app.log.debug(f"Deploying charmstore bundle: {deploy_cmd_args}")
                 for line in self.juju.deploy(
@@ -344,6 +352,10 @@ class Juju(SpecPlugin):
         if bootstrap_series:
             bootstrap_cmd_args.append("--bootstrap-series")
             bootstrap_cmd_args.append(bootstrap_series)
+
+        force = self.opt("force")
+        if force:
+            bootstrap_cmd_args.append("--force")
 
         model_defaults = self.opt("bootstrap.model-default")
 
