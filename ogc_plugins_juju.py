@@ -1,5 +1,7 @@
 """ OGC Plugin for interacting with Juju
 """
+
+# pylint: disable=too-many-locals
 import os
 import tempfile
 import uuid
@@ -11,7 +13,7 @@ from ogc.spec import SpecPlugin
 from ogc.state import app
 
 __plugin_name__ = "ogc-plugins-juju"
-__version__ = "1.0.21"
+__version__ = "1.0.22"
 __author__ = "Adam Stokes"
 __author_email__ = "adam.stokes@gmail.com"
 __maintainer__ = "Adam Stokes"
