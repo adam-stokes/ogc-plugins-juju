@@ -13,7 +13,7 @@ from ogc.spec import SpecPlugin
 from ogc.state import app
 
 __plugin_name__ = "ogc-plugins-juju"
-__version__ = "1.0.22"
+__version__ = "1.0.23"
 __author__ = "Adam Stokes"
 __author_email__ = "adam.stokes@gmail.com"
 __maintainer__ = "Adam Stokes"
@@ -118,7 +118,6 @@ class Juju(SpecPlugin):
             "required": False,
             "description": "Juju bootstrap config options",
         },
-
         {
             "key": "bootstrap.model-default",
             "required": False,
