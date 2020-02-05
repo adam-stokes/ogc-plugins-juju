@@ -366,15 +366,17 @@ class Juju(SpecPlugin):
 
         model_defaults = self.opt("bootstrap.model-default")
 
-        for m_default in model_defaults:
-            bootstrap_cmd_args.append("--model-default")
-            bootstrap_cmd_args.append(m_default)
+        if model_defaults:
+            for m_default in model_defaults:
+                bootstrap_cmd_args.append("--model-default")
+                bootstrap_cmd_args.append(m_default)
 
         config_defaults = self.opt("bootstrap.config")
 
-        for c_default in config_defaults:
-            bootstrap_cmd_args.append("--config")
-            bootstrap_cmd_args.append(c_default)
+        if config_defaults:
+            for c_default in config_defaults:
+                bootstrap_cmd_args.append("--config")
+                bootstrap_cmd_args.append(c_default)
 
         bootstrap_debug = self.opt("bootstrap.debug")
         if bootstrap_debug:
