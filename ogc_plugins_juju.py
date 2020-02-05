@@ -114,6 +114,12 @@ class Juju(SpecPlugin):
             "description": "Juju bootstrap constraints",
         },
         {
+            "key": "bootstrap.config",
+            "required": False,
+            "description": "Juju bootstrap config options",
+        },
+
+        {
             "key": "bootstrap.model-default",
             "required": False,
             "description": "Juju bootstrap model defaults",
@@ -364,6 +370,12 @@ class Juju(SpecPlugin):
         for m_default in model_defaults:
             bootstrap_cmd_args.append("--model-default")
             bootstrap_cmd_args.append(m_default)
+
+        config_defaults = self.opt("bootstrap.config")
+
+        for c_default in config_defaults:
+            bootstrap_cmd_args.append("--config")
+            bootstrap_cmd_args.append(c_default)
 
         bootstrap_debug = self.opt("bootstrap.debug")
         if bootstrap_debug:
