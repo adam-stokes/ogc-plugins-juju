@@ -14,7 +14,7 @@ from ogc.spec import SpecPlugin
 from ogc.state import app
 
 __plugin_name__ = "ogc-plugins-juju"
-__version__ = "1.0.34"
+__version__ = "1.0.35"
 __author__ = "Adam Stokes"
 __author_email__ = "adam.stokes@gmail.com"
 __maintainer__ = "Adam Stokes"
@@ -318,13 +318,9 @@ class Juju(SpecPlugin):
         if force:
             deploy_cmd_args.append("--force")
         app.log.info(f"Deploying: juju deploy {' '.join(deploy_cmd_args)}")
-        ret = cmd_ok(
-                f"juju deploy {' '.join(deploy_cmd_args)}", shell=True,
-            )
+        ret = cmd_ok(f"juju deploy {' '.join(deploy_cmd_args)}", shell=True,)
         if not ret.ok:
-            raise SpecProcessException(
-                f"Failed to deploy ({deploy_cmd_args}): {ret}"
-            )
+            raise SpecProcessException(f"Failed to deploy ({deploy_cmd_args}): {ret}")
 
     def _teardown(self):
         """ Destroy environment
