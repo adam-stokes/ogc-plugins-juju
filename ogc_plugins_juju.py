@@ -321,7 +321,6 @@ class Juju(SpecPlugin):
             app.log.info(f"Deploying: juju deploy {' '.join(deploy_cmd_args)}")
             cmd_ok(
                 f"juju deploy {' '.join(deploy_cmd_args)}",
-                env=app.env.copy(),
                 shell=True,
             )
         except SpecProcessException as error:
