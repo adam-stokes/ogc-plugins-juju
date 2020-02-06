@@ -9,12 +9,12 @@ from pathlib import Path
 
 import sh
 from ogc.exceptions import SpecConfigException, SpecProcessException
+from ogc.run import script
 from ogc.spec import SpecPlugin
 from ogc.state import app
-from ogc.run import script
 
 __plugin_name__ = "ogc-plugins-juju"
-__version__ = "1.0.30"
+__version__ = "1.0.31"
 __author__ = "Adam Stokes"
 __author_email__ = "adam.stokes@gmail.com"
 __maintainer__ = "Adam Stokes"
