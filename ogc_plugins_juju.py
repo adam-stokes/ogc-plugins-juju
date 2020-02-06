@@ -14,7 +14,7 @@ from ogc.spec import SpecPlugin
 from ogc.state import app
 
 __plugin_name__ = "ogc-plugins-juju"
-__version__ = "1.0.33"
+__version__ = "1.0.34"
 __author__ = "Adam Stokes"
 __author_email__ = "adam.stokes@gmail.com"
 __maintainer__ = "Adam Stokes"
@@ -320,8 +320,7 @@ class Juju(SpecPlugin):
         try:
             app.log.info(f"Deploying: juju deploy {' '.join(deploy_cmd_args)}")
             cmd_ok(
-                f"juju deploy {' '.join(deploy_cmd_args)}",
-                shell=True,
+                f"juju deploy {' '.join(deploy_cmd_args)}", shell=True,
             )
         except SpecProcessException as error:
             raise SpecProcessException(
