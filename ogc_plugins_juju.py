@@ -13,7 +13,7 @@ from ogc.spec import SpecPlugin
 from ogc.state import app
 
 __plugin_name__ = "ogc-plugins-juju"
-__version__ = "1.0.27"
+__version__ = "1.0.28"
 __author__ = "Adam Stokes"
 __author_email__ = "adam.stokes@gmail.com"
 __maintainer__ = "Adam Stokes"
@@ -251,7 +251,9 @@ class Juju(SpecPlugin):
         """ Run ssh command on target
         """
         ssh_opts = "-t -o ControlPath=~/.ssh/master-$$ -o ControlMaster=auto -o ControlPersist=60"
-        sh.juju("-m", self._fmt_controller_model, "--pty=True", target, ssh_opts, "--", cmd)
+        sh.juju(
+            "-m", self._fmt_controller_model, "--pty=True", target, ssh_opts, "--", cmd
+        )
 
     @property
     def _fmt_controller_model(self):
