@@ -13,7 +13,7 @@ from ogc.spec import SpecPlugin
 from ogc.state import app
 
 __plugin_name__ = "ogc-plugins-juju"
-__version__ = "1.0.28"
+__version__ = "1.0.29"
 __author__ = "Adam Stokes"
 __author_email__ = "adam.stokes@gmail.com"
 __maintainer__ = "Adam Stokes"
@@ -310,7 +310,7 @@ class Juju(SpecPlugin):
             deploy_cmd_args.append(channel)
         if constraints:
             deploy_cmd_args.append("--constraints")
-            deploy_cmd_args.append(f"\"{constraints}\"")
+            deploy_cmd_args.append(f'"{constraints}"')
         if series:
             deploy_cmd_args.append("--series")
             deploy_cmd_args.append(series)
