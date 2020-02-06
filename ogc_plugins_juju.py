@@ -247,6 +247,12 @@ class Juju(SpecPlugin):
         """
         return sh.juju_wait.bake(_env=app.env.copy())
 
+    def juju_ssh(self, target, cmd):
+        """ Run ssh command on target
+        """
+        ssh_opts = "-t -o ControlPath=~/.ssh/master-$$ -o ControlMaster=auto -o ControlPersist=60"
+        sh.juju("-m", self._fmt_controller_model, "--pty=True", target, ssh_opts, "--", cmd)
+
     @property
     def _fmt_controller_model(self):
         return (
@@ -302,7 +308,7 @@ class Juju(SpecPlugin):
             deploy_cmd_args.append(channel)
         if constraints:
             deploy_cmd_args.append("--constraints")
-            deploy_cmd_args.append(constraints)
+            deploy_cmd_args.append(f"'{constraints}'")
         if series:
             deploy_cmd_args.append("--series")
             deploy_cmd_args.append(series)
