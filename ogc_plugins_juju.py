@@ -317,14 +317,13 @@ class Juju(SpecPlugin):
             deploy_cmd_args.append(series)
         if force:
             deploy_cmd_args.append("--force")
-        try:
-            app.log.info(f"Deploying: juju deploy {' '.join(deploy_cmd_args)}")
-            cmd_ok(
+        app.log.info(f"Deploying: juju deploy {' '.join(deploy_cmd_args)}")
+        ret = cmd_ok(
                 f"juju deploy {' '.join(deploy_cmd_args)}", shell=True,
             )
-        except SpecProcessException as error:
+        if not ret.ok:
             raise SpecProcessException(
-                f"{error}: deploy ({deploy_cmd_args}): {error.stderr.decode().strip()}"
+                f"Failed to deploy ({deploy_cmd_args}): {ret}"
             )
 
     def _teardown(self):
