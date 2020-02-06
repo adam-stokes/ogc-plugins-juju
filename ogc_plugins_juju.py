@@ -11,6 +11,7 @@ import sh
 from ogc.exceptions import SpecConfigException, SpecProcessException
 from ogc.spec import SpecPlugin
 from ogc.state import app
+from ogc.run import script
 
 __plugin_name__ = "ogc-plugins-juju"
 __version__ = "1.0.30"
@@ -318,11 +319,10 @@ class Juju(SpecPlugin):
             deploy_cmd_args.append("--force")
         try:
             app.log.debug(f"Deploying: {deploy_cmd_args}")
-            for line in self.juju.deploy(*deploy_cmd_args, _iter=True, _bg_exc=False):
-                app.log.info(line.strip())
-        except sh.ErrorReturnCode as error:
+            script(f"juju deploy {' '.join(deploy_cmd_args)}", env=app.env.copy())
+        except SpecProcessException as error:
             raise SpecProcessException(
-                f"Failed to deploy ({deploy_cmd_args}): {error.stderr.decode().strip()}"
+                f"{error}: deploy ({deploy_cmd_args}): {error.stderr.decode().strip()}"
             )
 
     def _teardown(self):
