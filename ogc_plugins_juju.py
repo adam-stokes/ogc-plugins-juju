@@ -319,7 +319,11 @@ class Juju(SpecPlugin):
             deploy_cmd_args.append("--force")
         try:
             app.log.info(f"Deploying: juju deploy {' '.join(deploy_cmd_args)}")
-            cmd_ok(f"juju deploy {' '.join(deploy_cmd_args)}", env=app.env.copy(), shell=True)
+            cmd_ok(
+                f"juju deploy {' '.join(deploy_cmd_args)}",
+                env=app.env.copy(),
+                shell=True,
+            )
         except SpecProcessException as error:
             raise SpecProcessException(
                 f"{error}: deploy ({deploy_cmd_args}): {error.stderr.decode().strip()}"
