@@ -8,7 +8,7 @@ import uuid
 from pathlib import Path
 
 import sh
-from ogc.exceptions import SpecProcessException
+from ogc.exceptions import SpecConfigException, SpecProcessException
 from ogc.spec import SpecPlugin
 from ogc.state import app
 
@@ -160,6 +160,11 @@ class Juju(SpecPlugin):
             "description": "The Juju bundle to use",
         },
         {
+            "key": "deploy.charm",
+            "required": False,
+            "description": "The Juju charm to use",
+        },
+        {
             "key": "deploy.overlay",
             "required": False,
             "description": "Juju bundle fragments that can be overlayed a base bundle.",
@@ -252,6 +257,7 @@ class Juju(SpecPlugin):
         """ Handles juju deploy
         """
         bundle = self.opt("deploy.bundle")
+        charm = self.opt("deploy.charm")
         overlay = self.opt("deploy.overlay")
         channel = self.opt("deploy.channel")
         constraints = self.opt("deploy.constraints")
@@ -260,6 +266,9 @@ class Juju(SpecPlugin):
 
         deploy_cmd_args = []
         charm_pull_args = []
+        if charm:
+            deploy_cmd_args = ["-m", self._fmt_controller_model, charm]
+
         if bundle.startswith("cs:"):
             charm_pull_args.append(bundle)
             tmpsuffix = str(uuid.uuid4()).split("-").pop()
@@ -278,46 +287,35 @@ class Juju(SpecPlugin):
                 self._fmt_controller_model,
                 f"{charm_pull_path}/bundle.yaml",
             ]
-            if overlay:
-                tmp_file = tempfile.mkstemp()
-                tmp_file_path = Path(tmp_file[-1])
-                tmp_file_path.write_text(overlay, encoding="utf8")
-                deploy_cmd_args.append("--overlay")
-                deploy_cmd_args.append(str(tmp_file_path))
-                os.close(tmp_file[0])
-            if channel:
-                deploy_cmd_args.append("--channel")
-                deploy_cmd_args.append(channel)
-            if constraints:
-                deploy_cmd_args.append("--constraints")
-                deploy_cmd_args.append(constraints)
-            if series:
-                deploy_cmd_args.append("--series")
-                deploy_cmd_args.append(series)
-            if force:
-                deploy_cmd_args.append("--force")
-            try:
-                app.log.debug(f"Deploying charmstore bundle: {deploy_cmd_args}")
-                for line in self.juju.deploy(
-                    *deploy_cmd_args, _iter=True, _bg_exc=False
-                ):
-                    app.log.info(line.strip())
-            except sh.ErrorReturnCode as error:
-                raise SpecProcessException(
-                    f"Failed to deploy ({deploy_cmd_args}): {error.stderr.decode().strip()}"
-                )
         else:
             deploy_cmd_args = ["-m", self._fmt_controller_model, bundle]
-            try:
-                app.log.debug(f"Deploying custom bundle: {deploy_cmd_args}")
-                for line in self.juju.deploy(
-                    *deploy_cmd_args, _iter=True, _bc_exc=False
-                ):
-                    app.log.info(line.strip())
-            except sh.ErrorReturnCode as error:
-                raise SpecProcessException(
-                    f"Failed to deploy ({deploy_cmd_args}): {error.stderr.decode().strip()}"
-                )
+
+        if bundle and overlay:
+            tmp_file = tempfile.mkstemp()
+            tmp_file_path = Path(tmp_file[-1])
+            tmp_file_path.write_text(overlay, encoding="utf8")
+            deploy_cmd_args.append("--overlay")
+            deploy_cmd_args.append(str(tmp_file_path))
+            os.close(tmp_file[0])
+        if channel:
+            deploy_cmd_args.append("--channel")
+            deploy_cmd_args.append(channel)
+        if constraints:
+            deploy_cmd_args.append("--constraints")
+            deploy_cmd_args.append(constraints)
+        if series:
+            deploy_cmd_args.append("--series")
+            deploy_cmd_args.append(series)
+        if force:
+            deploy_cmd_args.append("--force")
+        try:
+            app.log.debug(f"Deploying: {deploy_cmd_args}")
+            for line in self.juju.deploy(*deploy_cmd_args, _iter=True, _bg_exc=False):
+                app.log.info(line.strip())
+        except sh.ErrorReturnCode as error:
+            raise SpecProcessException(
+                f"Failed to deploy ({deploy_cmd_args}): {error.stderr.decode().strip()}"
+            )
 
     def _teardown(self):
         """ Destroy environment
@@ -483,6 +481,15 @@ class Juju(SpecPlugin):
         # Do teardown
         if self.opt("teardown"):
             self._teardown()
+
+    def conflicts(self):
+        bundle = self.opt("deploy.bundle")
+        charm = self.opt("deploy.charm")
+
+        if bundle and charm:
+            raise SpecConfigException(
+                "Can not have both bundle and charm defined in deployment, must choose one or the other."
+            )
 
 
 __class_plugin_obj__ = Juju
