@@ -9,7 +9,7 @@ from pathlib import Path
 
 import sh
 from ogc.exceptions import SpecConfigException, SpecProcessException
-from ogc.run import script
+from ogc.run import cmd_ok
 from ogc.spec import SpecPlugin
 from ogc.state import app
 
@@ -318,8 +318,8 @@ class Juju(SpecPlugin):
         if force:
             deploy_cmd_args.append("--force")
         try:
-            app.log.debug(f"Deploying: {deploy_cmd_args}")
-            script(f"juju deploy {' '.join(deploy_cmd_args)}", env=app.env.copy())
+            app.log.info(f"Deploying: juju deploy {' '.join(deploy_cmd_args)}")
+            cmd_ok(f"juju deploy {' '.join(deploy_cmd_args)}", env=app.env.copy(), shell=True)
         except SpecProcessException as error:
             raise SpecProcessException(
                 f"{error}: deploy ({deploy_cmd_args}): {error.stderr.decode().strip()}"
