@@ -311,7 +311,7 @@ class Juju(SpecPlugin):
             deploy_cmd_args.append(channel)
         if constraints:
             deploy_cmd_args.append("--constraints")
-            deploy_cmd_args.append(constraints)
+            deploy_cmd_args.append(f"'{constraints}'")
         if series:
             deploy_cmd_args.append("--series")
             deploy_cmd_args.append(series)
