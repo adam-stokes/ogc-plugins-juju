@@ -269,7 +269,7 @@ class Juju(SpecPlugin):
         if charm:
             deploy_cmd_args = ["-m", self._fmt_controller_model, charm]
 
-        if bundle.startswith("cs:"):
+        if bundle and bundle.startswith("cs:"):
             charm_pull_args.append(bundle)
             tmpsuffix = str(uuid.uuid4()).split("-").pop()
             charm_pull_path = f"{tempfile.gettempdir()}/{tmpsuffix}"
