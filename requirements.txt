@@ -9,7 +9,7 @@ astroid==2.2.5            # via pylint
 atomicwrites==1.3.0       # via pytest
 attrs==19.1.0             # via black, packaging, pytest
 black==19.10b0
-bleach==3.1.0             # via readme-renderer
+bleach==3.1.1             # via readme-renderer
 certifi==2019.6.16        # via requests
 chardet==3.0.4            # via requests
 click==7.0                # via black, ogc
@@ -19,7 +19,7 @@ docutils==0.15.2          # via readme-renderer
 entrypoints==0.3          # via flake8
 flake8==3.7.8
 idna==2.8                 # via requests
-importlib-metadata==0.19  # via pluggy, pytest
+importlib-metadata==0.19  # via pluggy
 invoke==1.3.0
 isort==4.3.21
 jinja2==2.10.1            # via ogc, punch.py
